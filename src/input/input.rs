@@ -126,7 +126,9 @@ pub struct InputManager {
 impl PlayerInput {
     /// Creates a new `PlayerInput` instance with all keys initially released.
     ///
-    /// Returns a new `PlayerInput` instance with all key states set to `false`.
+    /// # Returns
+    /// 
+    ///  A new `PlayerInput` instance with all key states set to `false`.
     fn new() -> Self {
         PlayerInput {
             lp: false,
@@ -241,6 +243,10 @@ impl PlayerInput {
     ///
     /// Converts the current state of the player input into a 16-bit representation
     /// where each bit corresponds to the state of a specific key or directional input.
+    /// 
+    /// # Returns
+    /// 
+    /// The current state of the player input in 16-bit
     fn to_bits(&self) -> u16 {
         let mut result = 0;
         if self.f {
@@ -298,6 +304,11 @@ impl InputKey {
     /// # Arguments
     ///
     /// * `key` - The command key associated with the input.
+    /// 
+    /// # Returns
+    /// A new `InputKey` instance:
+    /// * `cmd_key` initialized with `Key` value
+    /// * `buff_time` initialized to zero
     fn new(key: CK) -> Self {
         Self {
             cmd_key: key,
@@ -314,7 +325,9 @@ impl InputKey {
 
     /// Retrieves a reference to the command key associated with the input.
     ///
-    /// Returns a reference to the command key associated with the input.
+    /// # Returns
+    /// 
+    /// A reference to the command key associated with the input.
     pub fn get_cmd_key_ref(&self) -> &CK {
         &self.cmd_key
     }
@@ -323,8 +336,11 @@ impl InputKey {
 impl CommandInput {
     /// Creates a new `CommandInput` instance.
     ///
-    /// Returns a new `CommandInput` instance with an empty list of input keys,
-    /// an input window of zero, and the `walked` flag set to `false`.
+    /// # Returns
+    /// A new `CommandInput` instance:
+    /// * `keys` initialize as empty vector
+    /// * `input_window` initialized to zero
+    /// * `walked` flag initialized to `false`.
     fn new() -> Self {
         Self {
             keys: Vec::new(),
@@ -335,7 +351,8 @@ impl CommandInput {
 
     /// Retrieves a reference to the input window duration.
     ///
-    /// Returns a reference to the input window duration, indicating the maximum
+    /// # Returns
+    /// A reference to the input window duration, indicating the maximum
     /// duration for which the input is valid.
     pub fn get_input_window_ref(&self) -> &u16 {
         &self.input_window
@@ -343,7 +360,8 @@ impl CommandInput {
 
     /// Retrieves a reference to the list of input keys.
     ///
-    /// Returns a reference to the list of input keys stored in the `CommandInput` instance.
+    /// # Returns
+    /// A reference to the list of input `keys` stored in the `CommandInput` instance.
     pub fn get_keys_ref(&self) -> &Vec<InputKey> {
         &self.keys
     }
@@ -353,8 +371,10 @@ impl CommandInput {
 impl InputManager {
     /// Creates a new `InputManager` instance.
     ///
-    /// Returns a new `InputManager` instance with the player input initialized
-    /// to all keys released and an empty input buffer.
+    /// # Returns
+    /// A new `InputManager` instance:
+    /// * `player_input` initialized to all keys released (`false`)
+    /// * `input_buffer` initialize as empty vector.
     pub fn new() -> Self {
         Self {
             player_input: PlayerInput::new(),
