@@ -2,68 +2,131 @@ use piston_window::Key;
 use std::mem;
 use crate::{CommandNode, CK};
 
-// Action refer to the attack commands and her values
+/// Represents different attack commands and their associated values.
+/// 
+/// This enum defines the various attack commands that can be executed in the game,
+/// along with their corresponding values. These commands include LP (Light Punch),
+/// MP (Medium Punch), HP (Heavy Punch), LK (Light Kick), MK (Medium Kick), and HK (Heavy Kick).
 #[derive(Copy, Clone, Debug)]
 enum Action {
+    /// Ligth Punch Action
     LP = 1 << 4,
+    /// Medium Punch Action
     MP = 1 << 5,
+    /// Heavy Punch Action
     HP = 1 << 6,
+    /// Ligth Kick Action
     LK = 1 << 7,
+    /// Medium Kick Action
     MK = 1 << 8,
+    /// Heavy Kick Action
     HK = 1 << 9,
 }
 
-// Direction refer to the directional movement in the 8 axis and her values
+/// Represents directional movement in 2D space.
+///
+/// This enum defines the possible directional movements in 2D space,
+/// including forward, backward, up, down, and various diagonal combinations.
 #[derive(Copy, Clone, Debug)]
 enum Direction {
+    /// Forward direction.
     F = 5,
+    /// Up direction.
     U = 2,
+    /// Backward direction.
     B = 6,
+    /// Down direction.
     D = 9,
+    /// Up-Backward diagonal direction.
     UB = 8,
+    /// Up-Forward diagonal direction.
     UF = 7,
+    /// Down-Forward diagonal direction.
     DF = 14,
+    /// Down-Backward diagonal direction.
     DB = 15,
 }
 
-// Player store values like if is pressing or not the keys
+/// Stores the input state of a player.
+///
+/// This struct holds the current input state of a player, indicating whether
+/// specific keys or directional inputs are being pressed.
 struct PlayerInput {
+    /// Light Punch key state
     lp: bool,
+    /// Medium Punch key state
     mp: bool,
+    /// Heavy Punch key state
     hp: bool,
+    /// Light Kick key state
     lk: bool,
+    /// Medium Kick key state
     mk: bool,
+    /// Heavy Kick key state
     hk: bool,
+    /// Forward key state
     f: bool,
+    /// Up key state
     u: bool,
+    /// Backward key state
     b: bool,
+    /// Down key state
     d: bool,
+    /// Up-Backward key state
     ub: bool,
+    /// Up-Forward key state
     uf: bool,
+    /// Down-Forward key state
     df: bool,
+    /// Down-Backward key state
     db: bool,
 }
 
+/// Represents an input key along with its buffer time.
+///
+/// This struct holds an input key along with the time it has been buffered.
+/// It is used to track the duration for which a particular key has been held.
 #[derive(Debug, Clone, Copy)]
 pub struct InputKey {
+    /// Command key associated with the input
     cmd_key: CK,
+    /// Time for which the input has been buffered
     buff_time: u128,
 }
 
-// Commmand Input refer a command or a set of commands in a input sequence (buffered)
-// can be directions or actions LP, MP, Backward, Forward...
+/// Represents a sequence of input commands.
+///
+/// This struct represents a sequence of input commands that have been buffered,
+/// forming a command input. It contains a list of input keys, an input window
+/// indicating the maximum duration for which the input is valid, and a flag to
+/// track whether the input has been processed.
 #[derive(Clone, Debug)]
 pub struct CommandInput {
+    /// List of input keys in the sequence
     keys: Vec<InputKey>,
+    /// Maximum duration for which the input is valid
     input_window: u16,
+    // Flag indicating whether the input has been processed
     walked: bool,
 }
+
+/// Manages player input and command buffering.
+///
+/// This struct handles player input and manages the buffering of input commands.
+/// It maintains the current input state of the player and stores a buffer of
+/// command inputs for processing.
 pub struct InputManager {
+    /// Player input state
     player_input: PlayerInput,
-    input_buffer: Vec<CommandInput>
+    /// Buffer for storing command inputs
+    input_buffer: Vec<CommandInput>,
 }
 
+
 impl PlayerInput {
+    /// Creates a new `PlayerInput` instance with all keys initially released.
+    ///
+    /// Returns a new `PlayerInput` instance with all key states set to `false`.
     fn new() -> Self {
         PlayerInput {
             lp: false,
@@ -83,6 +146,19 @@ impl PlayerInput {
         }
     }
 
+    /// Sets the state of a specified key.
+    ///
+    /// Sets the state of the given key to the specified boolean value.
+    /// Returns the previous state of the key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - A reference to the key to set the state for.
+    /// * `state` - The boolean value indicating whether the key is pressed (`true`) or released (`false`).
+    ///
+    /// # Returns
+    ///
+    /// The previous state of the key before it was set.
     fn set_state(&mut self, key: &Key, state: bool) -> bool {
         let result;
         match key {
@@ -126,11 +202,22 @@ impl PlayerInput {
                 result = self.f;
                 self.f = state
             }
-            _ => return false, // Otros casos no se consideran
+            _ => return false, // Other cases are not considered
         }
         result
     }
 
+    /// Retrieves the state of a specified command key.
+    ///
+    /// Returns the current state of the specified command key.
+    ///
+    /// # Arguments
+    ///
+    /// * `cmd_key` - A reference to the command key whose state is to be retrieved.
+    ///
+    /// # Returns
+    ///
+    /// The current state of the specified command key.
     fn get_state(&self, cmd_key: &CK) -> bool {
         match cmd_key {
             CK::DB => self.db,
@@ -150,6 +237,10 @@ impl PlayerInput {
         }
     }
 
+    /// Converts the player input to a bit representation.
+    ///
+    /// Converts the current state of the player input into a 16-bit representation
+    /// where each bit corresponds to the state of a specific key or directional input.
     fn to_bits(&self) -> u16 {
         let mut result = 0;
         if self.f {
@@ -199,6 +290,14 @@ impl PlayerInput {
 }
 
 impl InputKey {
+    /// Creates a new `InputKey` instance with the specified command key.
+    ///
+    /// Returns a new `InputKey` instance initialized with the provided command key
+    /// and a buffer time of zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The command key associated with the input.
     fn new(key: CK) -> Self {
         Self {
             cmd_key: key,
@@ -206,16 +305,26 @@ impl InputKey {
         }
     }
 
+    /// Updates the buffer time of the input key.
+    ///
+    /// Increments the buffer time of the input key by one unit.
     fn update(&mut self) {
         self.buff_time += 1;
     }
 
+    /// Retrieves a reference to the command key associated with the input.
+    ///
+    /// Returns a reference to the command key associated with the input.
     pub fn get_cmd_key_ref(&self) -> &CK {
         &self.cmd_key
     }
 }
 
 impl CommandInput {
+    /// Creates a new `CommandInput` instance.
+    ///
+    /// Returns a new `CommandInput` instance with an empty list of input keys,
+    /// an input window of zero, and the `walked` flag set to `false`.
     fn new() -> Self {
         Self {
             keys: Vec::new(),
@@ -224,16 +333,28 @@ impl CommandInput {
         }
     }
 
-    pub fn get_input_window_ref(&self) -> &u16{
+    /// Retrieves a reference to the input window duration.
+    ///
+    /// Returns a reference to the input window duration, indicating the maximum
+    /// duration for which the input is valid.
+    pub fn get_input_window_ref(&self) -> &u16 {
         &self.input_window
     }
 
-    pub fn get_keys_ref(&self) -> &Vec<InputKey>{
+    /// Retrieves a reference to the list of input keys.
+    ///
+    /// Returns a reference to the list of input keys stored in the `CommandInput` instance.
+    pub fn get_keys_ref(&self) -> &Vec<InputKey> {
         &self.keys
     }
 }
 
+
 impl InputManager {
+    /// Creates a new `InputManager` instance.
+    ///
+    /// Returns a new `InputManager` instance with the player input initialized
+    /// to all keys released and an empty input buffer.
     pub fn new() -> Self {
         Self {
             player_input: PlayerInput::new(),
@@ -241,7 +362,10 @@ impl InputManager {
         }
     }
 
-    
+    /// Updates the hold duration of input keys in the input buffer.
+    ///
+    /// Iterates through each command input in the input buffer and increments
+    /// the hold duration of any input keys that are currently held down.
     pub fn update_hold_key(&mut self) {
         for inputs in &mut self.input_buffer {
             for key in &mut inputs.keys {
@@ -252,6 +376,15 @@ impl InputManager {
         }
     }
 
+    /// Traverses the input buffer and checks for valid input sequences.
+    ///
+    /// Walks through the input buffer, searching for valid input sequences
+    /// based on the provided command node tree. If a valid sequence is found,
+    /// the corresponding action is executed.
+    ///
+    /// # Arguments
+    ///
+    /// * `tree` - A reference to the command node tree used to search for valid input sequences.
     pub fn walk_input_buffer(&mut self, tree: &CommandNode) {
         let input_buffer = &mut self.input_buffer;
         for pos in 1..input_buffer.len() {
@@ -266,6 +399,16 @@ impl InputManager {
         }
     }
 
+    /// Handles the input from the player and updates the input buffer accordingly.
+    ///
+    /// Processes the player's input, converts it into command inputs, and updates
+    /// the input buffer with the new input. Optionally, replaces the last input in
+    /// the buffer if the buffer exceeds its maximum size.
+    ///
+    /// # Arguments
+    ///
+    /// * `ticks` - A mutable reference to the tick counter representing the current game time.
+    /// * `replace` - A boolean indicating whether to replace the last input in the buffer if necessary.
     pub fn handle_key_input(
         &mut self,
         ticks: &mut u16,
@@ -327,10 +470,26 @@ impl InputManager {
         }
     }
 
-    pub fn set_player_input(&mut self, key: &Key, value: bool) -> bool{
-        return self.player_input.set_state(key, value);
+    /// Sets the state of a specified key in the player input.
+    ///
+    /// Sets the state of the specified key in the player input to the specified value.
+    /// Returns the previous state of the key before it was set.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - A reference to the key to set the state for.
+    /// * `value` - The boolean value indicating whether the key is pressed (`true`) or released (`false`).
+    ///
+    /// # Returns
+    ///
+    /// The previous state of the key before it was set.
+    pub fn set_player_input(&mut self, key: &Key, value: bool) -> bool {
+        self.player_input.set_state(key, value)
     }
 
+    /// Retrieves a reference to the input buffer.
+    ///
+    /// Returns a reference to the input buffer stored in the `InputManager` instance.
     pub fn get_input_buffer_ref(&self) -> &Vec<CommandInput> {
         &self.input_buffer
     }
