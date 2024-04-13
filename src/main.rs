@@ -1,13 +1,14 @@
+pub mod input;
+
+use input::input::CommandInput;
 use piston_window::*;
 use sprite::*;
 use std::{
     collections::HashSet,
     fs::File,
     io::{self, BufRead},
-    mem,
     rc::Rc,
     time::Instant,
-    u128,
 };
 use winit::window::WindowButtons;
 
@@ -16,7 +17,7 @@ const PAUSE_DURATION: i32 = 3;
 
 // CK refer to command keys avaible commands in a fight
 #[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
-enum CK {
+pub enum CK {
     DB,
     D,
     DF,
@@ -33,206 +34,9 @@ enum CK {
     HK,
 }
 
-// Action refer to the attack commands and her values
-#[derive(Copy, Clone, Debug)]
-enum Action {
-    LP = 1 << 4,
-    MP = 1 << 5,
-    HP = 1 << 6,
-    LK = 1 << 7,
-    MK = 1 << 8,
-    HK = 1 << 9,
-}
-
-// Player store values like if is pressing or not the keys
-struct Player {
-    lp: bool,
-    mp: bool,
-    hp: bool,
-    lk: bool,
-    mk: bool,
-    hk: bool,
-    f: bool,
-    u: bool,
-    b: bool,
-    d: bool,
-    ub: bool,
-    uf: bool,
-    df: bool,
-    db: bool,
-}
-
-impl Player {
-    fn new() -> Self {
-        Player {
-            lp: false,
-            mp: false,
-            hp: false,
-            lk: false,
-            mk: false,
-            hk: false,
-            f: false,
-            u: false,
-            b: false,
-            d: false,
-            ub: false,
-            uf: false,
-            df: false,
-            db: false,
-        }
-    }
-
-    fn set_state(&mut self, key: &Key, state: bool) -> bool {
-        let result;
-        match key {
-            Key::A => {
-                result = self.lp;
-                self.lp = state
-            }
-            Key::S => {
-                result = self.mp;
-                self.mp = state
-            }
-            Key::D => {
-                result = self.hp;
-                self.hp = state
-            }
-            Key::Z => {
-                result = self.lk;
-                self.lk = state
-            }
-            Key::X => {
-                result = self.mk;
-                self.mk = state
-            }
-            Key::C => {
-                result = self.hk;
-                self.hk = state
-            }
-            Key::Up => {
-                result = self.u;
-                self.u = state
-            }
-            Key::Down => {
-                result = self.d;
-                self.d = state
-            }
-            Key::Left => {
-                result = self.b;
-                self.b = state
-            }
-            Key::Right => {
-                result = self.f;
-                self.f = state
-            }
-            _ => return false, // Otros casos no se consideran
-        }
-        result
-    }
-
-    fn get_state(&self, cmd_key: &CK) -> bool {
-        match cmd_key {
-            CK::DB => self.db,
-            CK::D => self.d,
-            CK::DF => self.df,
-            CK::B => self.b,
-            CK::F => self.f,
-            CK::UB => self.ub,
-            CK::U => self.u,
-            CK::UF => self.uf,
-            CK::LP => self.lp,
-            CK::MP => self.mp,
-            CK::HP => self.hp,
-            CK::LK => self.lk,
-            CK::MK => self.mk,
-            CK::HK => self.hk,
-        }
-    }
-
-    fn to_bits(&self) -> u16 {
-        let mut result = 0;
-        if self.f {
-            result += 5
-        };
-        if self.u {
-            result += 2
-        };
-        if self.b {
-            result += 6
-        };
-        if self.d {
-            result += 9
-        };
-        if self.ub {
-            result += 8
-        };
-        if self.uf {
-            result += 7
-        };
-        if self.df {
-            result += 14
-        };
-        if self.db {
-            result += 15
-        };
-        if self.lp {
-            result += 1 << 4
-        };
-        if self.mp {
-            result += 1 << 5
-        };
-        if self.hp {
-            result += 1 << 6
-        };
-        if self.lk {
-            result += 1 << 7
-        };
-        if self.mk {
-            result += 1 << 8
-        };
-        if self.hk {
-            result += 1 << 9
-        };
-        result
-    }
-}
-
-// Direction refer to the directional movement in the 8 axis and her values
-#[derive(Copy, Clone, Debug)]
-enum Direction {
-    F = 5,
-    U = 2,
-    B = 6,
-    D = 9,
-    UB = 8,
-    UF = 7,
-    DF = 14,
-    DB = 15,
-}
-
-// InputKey refer to the key pressed and her lifetime hold
-#[derive(Debug, Clone, Copy)]
-struct InputKey {
-    cmd_key: CK,
-    buff_time: u128,
-}
-
-impl InputKey {
-    fn new(key: CK) -> Self {
-        Self {
-            cmd_key: key,
-            buff_time: 0,
-        }
-    }
-
-    fn update(&mut self) {
-        self.buff_time += 1;
-    }
-}
-
 // Command Node refer a node of a tree of commands example [2,3,6,a+b] <- branch
-#[derive(Debug)]
-struct CommandNode {
+#[derive(Debug, Clone)]
+pub struct CommandNode {
     cmd_elements: Option<Vec<CK>>,
     name: Option<String>,
     sensitive: bool,
@@ -280,25 +84,25 @@ impl CommandNode {
                 sub_node
                     .input_window
                     .iter()
-                    .all(|time| *time == 0 || &input.input_window <= time)
+                    .all(|time| *time == 0 || input.get_input_window_ref() <= time)
             }) {
                 let matched = if sub_node.sensitive {
                     sub_node.cmd_elements.iter().all(|commands| {
-                        input.keys.len() == commands.len()
+                        input.get_keys_ref().len() == commands.len()
                             && commands.iter().all(|command| {
                                 input
-                                    .keys
+                                    .get_keys_ref()
                                     .iter()
-                                    .any(|input_key| input_key.cmd_key == *command)
+                                    .any(|input_key| input_key.get_cmd_key_ref() == command)
                             })
                     })
                 } else {
                     sub_node.cmd_elements.iter().all(|commands| {
                         commands.iter().all(|command| {
                             input
-                                .keys
+                                .get_keys_ref()
                                 .iter()
-                                .any(|input_key| input_key.cmd_key == *command)
+                                .any(|input_key| input_key.get_cmd_key_ref() == command)
                         })
                     })
                 };
@@ -365,33 +169,6 @@ impl CommandElement {
             time: 15,
         }
     }
-
-    /*fn is_action(&self) -> bool {
-        let actions = [CK::LP, CK::MP, CK::HP, CK::LK, CK::MK, CK::HK];
-
-        self.elements
-            .iter()
-            .any(|element| actions.contains(element))
-    }*/
-}
-
-// Commmand Input refer a command or a set of commands in a input sequence (buffered)
-// can be directions or actions LP, MP, Backward, Forward...
-#[derive(Clone, Debug)]
-struct CommandInput {
-    keys: Vec<InputKey>,
-    input_window: u16,
-    walked: bool,
-}
-
-impl CommandInput {
-    fn new() -> Self {
-        Self {
-            keys: Vec::new(),
-            input_window: 0,
-            walked: false,
-        }
-    }
 }
 
 fn main() {
@@ -440,9 +217,8 @@ fn main() {
     // Getting the position of the sprite
     let sprite_coord = sprite.get_position();
 
-    let mut input_buffer: Vec<CommandInput> = Vec::new();
+    let mut input_manager = input::input::InputManager::new();
     let mut ticks = 0;
-    let mut player: Player = Player::new();
 
     let mut tree = CommandNode::new();
 
@@ -474,27 +250,12 @@ fn main() {
     // --------------------------------------------
     while let Some(e) = window.next() {
         if let Some(_) = e.update_args() {
-            for inputs in &mut input_buffer {
-                for key in &mut inputs.keys {
-                    if player.get_state(&key.cmd_key) {
-                        key.update();
-                    }
-                }
-            }
+            input_manager.update_hold_key();
             ticks += 1u16;
             if action_timer < PAUSE_DURATION {
                 action_timer += 1;
             } else if enable_action_timer {
-                for pos in 1..input_buffer.len() {
-                    if let Some(input) = input_buffer.get_mut(pos - 1) {
-                        if !input.walked {
-                            input.walked = true;
-                            if let Some(name) = tree.search(&input_buffer, pos - 1) {
-                                println!("{:?}", name);
-                            }
-                        }
-                    }
-                }
+                input_manager.walk_input_buffer(&tree);
                 enable_action_timer = false;
             }
             if debug {
@@ -523,19 +284,15 @@ fn main() {
                 | Key::Z
                 | Key::X
                 | Key::C => {
-                    if !player.set_state(&key, true) {
-                        handle_key_input(
-                            player.to_bits(),
-                            &mut input_buffer,
-                            &mut ticks,
-                            enable_action_timer,
-                        );
-                        if ![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key)
-                            && !enable_action_timer
-                        {
-                            action_timer = 0;
-                            enable_action_timer = true;
-                        }
+                    if input_manager.set_player_input(&key, true){
+                        return
+                    }
+                    input_manager.handle_key_input(&mut ticks, enable_action_timer);
+                    if ![Key::Up, Key::Down, Key::Left, Key::Right].contains(&key)
+                        && !enable_action_timer
+                    {
+                        action_timer = 0;
+                        enable_action_timer = true;
                     }
                 }
                 Key::F1 => {
@@ -563,14 +320,10 @@ fn main() {
                 | Key::Z
                 | Key::X
                 | Key::C => {
-                    if player.set_state(&key, false) {
-                        handle_key_input(
-                            player.to_bits(),
-                            &mut input_buffer,
-                            &mut ticks,
-                            enable_action_timer,
-                        );
+                    if !input_manager.set_player_input(&key, false){
+                        return
                     }
+                    input_manager.handle_key_input(&mut ticks, false);
                 }
                 _ => {}
             }
@@ -817,64 +570,4 @@ fn create_cmd_element(
     }
     cmd_element.sensitive = sensitive;
     Some(cmd_element)
-}
-
-fn handle_key_input(
-    player_input: u16,
-    input_buffer: &mut Vec<CommandInput>,
-    ticks: &mut u16,
-    replace: bool,
-) {
-    let mut input = CommandInput::new();
-
-    if input_buffer.len() > 32 {
-        input_buffer.remove(0);
-    }
-
-    let actions = [
-        (Action::LP, CK::LP),
-        (Action::MP, CK::MP),
-        (Action::HP, CK::HP),
-        (Action::LK, CK::LK),
-        (Action::MK, CK::MK),
-        (Action::HK, CK::HK),
-    ];
-
-    for (action, command_key) in &actions {
-        if player_input & (*action as u16) != 0 {
-            input.keys.push(InputKey::new(*command_key));
-        }
-    }
-
-    let last_bits = player_input & 0b1111;
-
-    let directions = [
-        (Direction::U as u16, CK::U),
-        (Direction::F as u16, CK::F),
-        (Direction::D as u16, CK::D),
-        (Direction::B as u16, CK::B),
-        (Direction::UF as u16, CK::UF),
-        (Direction::UB as u16, CK::UB),
-        (Direction::DF as u16, CK::DF),
-        (Direction::DB as u16, CK::DB),
-    ];
-
-    for (bits, command_key) in &directions {
-        if last_bits == *bits {
-            input.keys.push(InputKey::new(*command_key));
-            break;
-        }
-    }
-
-    if !input.keys.is_empty() {
-        if replace {
-            if let Some(last) = input_buffer.last_mut() {
-                input.input_window = last.input_window;
-                *last = input;
-            }
-        } else {
-            input.input_window = mem::replace(ticks, 0);
-            input_buffer.push(input);
-        }
-    }
 }
