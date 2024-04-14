@@ -1,9 +1,11 @@
+use crate::{commands, CK};
+
+use commands::CommandNode;
 use piston_window::Key;
 use std::mem;
-use crate::{CommandNode, CK};
 
 /// Represents different attack commands and their associated values.
-/// 
+///
 /// This enum defines the various attack commands that can be executed in the game,
 /// along with their corresponding values. These commands include LP (Light Punch),
 /// MP (Medium Punch), HP (Heavy Punch), LK (Light Kick), MK (Medium Kick), and HK (Heavy Kick).
@@ -122,12 +124,11 @@ pub struct InputManager {
     input_buffer: Vec<CommandInput>,
 }
 
-
 impl PlayerInput {
     /// Creates a new `PlayerInput` instance with all keys initially released.
     ///
     /// # Returns
-    /// 
+    ///
     ///  A new `PlayerInput` instance with all key states set to `false`.
     fn new() -> Self {
         PlayerInput {
@@ -243,9 +244,9 @@ impl PlayerInput {
     ///
     /// Converts the current state of the player input into a 16-bit representation
     /// where each bit corresponds to the state of a specific key or directional input.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The current state of the player input in 16-bit
     fn to_bits(&self) -> u16 {
         let mut result = 0;
@@ -304,11 +305,11 @@ impl InputKey {
     /// # Arguments
     ///
     /// * `key` - The command key associated with the input.
-    /// 
+    ///
     /// # Returns
     /// A new `InputKey` instance:
-    /// * `cmd_key` initialized with `Key` value
-    /// * `buff_time` initialized to zero
+    /// * `cmd_key` initialized with `Key` value.
+    /// * `buff_time` initialized to zero.
     fn new(key: CK) -> Self {
         Self {
             cmd_key: key,
@@ -326,7 +327,7 @@ impl InputKey {
     /// Retrieves a reference to the command key associated with the input.
     ///
     /// # Returns
-    /// 
+    ///
     /// A reference to the command key associated with the input.
     pub fn get_cmd_key_ref(&self) -> &CK {
         &self.cmd_key
@@ -338,7 +339,7 @@ impl CommandInput {
     ///
     /// # Returns
     /// A new `CommandInput` instance:
-    /// * `keys` initialize as empty vector
+    /// * `keys` initialize an empty vector
     /// * `input_window` initialized to zero
     /// * `walked` flag initialized to `false`.
     fn new() -> Self {
@@ -367,18 +368,17 @@ impl CommandInput {
     }
 }
 
-
 impl InputManager {
     /// Creates a new `InputManager` instance.
     ///
     /// # Returns
     /// A new `InputManager` instance:
     /// * `player_input` initialized to all keys released (`false`)
-    /// * `input_buffer` initialize as empty vector.
+    /// * `input_buffer` initialize an empty vector.
     pub fn new() -> Self {
         Self {
             player_input: PlayerInput::new(),
-            input_buffer: Vec::new()
+            input_buffer: Vec::new(),
         }
     }
 
@@ -429,19 +429,15 @@ impl InputManager {
     ///
     /// * `ticks` - A mutable reference to the tick counter representing the current game time.
     /// * `replace` - A boolean indicating whether to replace the last input in the buffer if necessary.
-    pub fn handle_key_input(
-        &mut self,
-        ticks: &mut u16,
-        replace: bool,
-    ) {
+    pub fn handle_key_input(&mut self, ticks: &mut u16, replace: bool) {
         let input_buffer = &mut self.input_buffer;
         let player_input = self.player_input.to_bits();
         let mut input = CommandInput::new();
-    
+
         if input_buffer.len() > 32 {
             input_buffer.remove(0);
         }
-    
+
         let actions = [
             (Action::LP, CK::LP),
             (Action::MP, CK::MP),
@@ -450,15 +446,15 @@ impl InputManager {
             (Action::MK, CK::MK),
             (Action::HK, CK::HK),
         ];
-    
+
         for (action, command_key) in &actions {
             if player_input & (*action as u16) != 0 {
                 input.keys.push(InputKey::new(*command_key));
             }
         }
-    
+
         let last_bits = player_input & 0b1111;
-    
+
         let directions = [
             (Direction::U as u16, CK::U),
             (Direction::F as u16, CK::F),
@@ -469,14 +465,14 @@ impl InputManager {
             (Direction::DF as u16, CK::DF),
             (Direction::DB as u16, CK::DB),
         ];
-    
+
         for (bits, command_key) in &directions {
             if last_bits == *bits {
                 input.keys.push(InputKey::new(*command_key));
                 break;
             }
         }
-    
+
         if !input.keys.is_empty() {
             if replace {
                 if let Some(last) = input_buffer.last_mut() {

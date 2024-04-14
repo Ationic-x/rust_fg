@@ -6,5 +6,5 @@ time = 15
 
 [Command]
 name = Shoryuken
-command = B, LP+MP
+command = B, >LP+MP
 #endcommands

@@ -1,2 +1,2 @@
 /// Module containing input handling functionality.
-pub mod input;
+pub mod manage;
