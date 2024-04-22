@@ -1,20 +1,21 @@
-pub mod input;
 pub mod character;
+pub mod input;
+
+extern crate image;
+extern crate piston_window;
 
 use character::commands;
+use character::decoder;
+use image::RgbaImage;
 use input::manage::InputManager;
 use piston_window::*;
 use sprite::*;
-use std::{
-    rc::Rc,
-    time::Instant,
-};
+use std::{rc::Rc, time::Instant};
 use winit::window::WindowButtons;
 
 const FPS: u64 = 60;
 const PAUSE_DURATION: i32 = 3;
 
-// CK refer to command keys avaible commands in a fight
 #[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum CK {
     DB,
@@ -34,70 +35,99 @@ pub enum CK {
 }
 
 fn main() {
-    // --------------------------------------------
-    // - CREATE WINDOW
-    // --------------------------------------------
-    // Size window
-    let window_size = [512; 2];
-    // Making the window were to play
-    let mut window: PistonWindow = WindowSettings::new("Square Game", window_size)
+    let mut window: PistonWindow = WindowSettings::new("Rust FG", [512; 2])
         .resizable(false)
         .build()
         .unwrap();
 
-    // Shorter reference to window
     let conf_window: &winit::window::Window = &window.window.window;
-
-    // Extra settings
-    // Disable maximize option
     conf_window.set_enabled_buttons(WindowButtons::CLOSE | WindowButtons::MINIMIZE);
+    window.events.set_max_fps(FPS);
+    window.events.set_ups(FPS);
 
-    // Creating a texture context of the PistonWindow
-    let mut texture_context = TextureContext {
-        factory: window.factory.clone(),
-        encoder: window.factory.create_command_buffer().into(),
-    };
-
-    // --------------------------------------------
-    // - CREATE SPRITE
-    // --------------------------------------------
-    // Getting folder of assets
     let assets = std::env::current_dir().unwrap().join("src").join("assets");
 
-    // Creating a texture of the sprite inside assets and the window
-    let texture = Rc::new(
-        Texture::from_path(
-            &mut texture_context,
-            assets.join("HotaruFutaba_861.png"),
-            Flip::Horizontal,
-            &TextureSettings::new(),
-        )
-        .unwrap(),
-    );
-    // Getting the sprite from texture
-    let sprite = Sprite::from_texture(texture);
-    // Getting the position of the sprite
-    let sprite_coord = sprite.get_position();
+    // ---------------------------
+    // ---------------------------
+    // ---------------------------
+
+    let sff_path = assets.join("sf3_ken.sff");
+    let sff = std::fs::read(sff_path).expect("Failed to read SFF file");
+    let sff = match decoder::Decoder::decode(&sff) {
+        Ok(decoded_data) => decoded_data,
+        Err(error) => {
+            println!("Error al decodificar sff: {:?}", error);
+            return;
+        }
+    };
+    println!("{}-{}", sff.groups_count(), sff.images_count());
+    let sprites = sff.sprites().collect::<Vec<_>>();
+    let sprited = sprites
+        .iter()
+        .find(|sprite| sprite.id().group == 105 && sprite.id().image == 2)
+        .unwrap();
+    println!("{:?}", sprited.id());
+
+    let mut pcx = match pcx::Reader::new(sprited.raw_data()) {
+        Ok(pcx) => pcx,
+        Err(error) => {
+            println!("Error al decodificar PCX: {:?}", error);
+            return;
+        }
+    };
+
+    let width = pcx.width() as usize;
+    let height = pcx.height() as usize;
+
+    let palette = sprited
+        .palette()
+        .chunks_exact(3)
+        .map(|i| [i[0], i[1], i[2], 255])
+        .collect::<Vec<_>>();
+
+    let mut data = vec![0; width * height];
+    for row in 0..height {
+        pcx.next_row_paletted(&mut data[row * width..row * width + width])
+            .expect("Pallete");
+    }
+
+    let rgba = data
+        .into_iter()
+        .flat_map(|i| match i as usize {
+            0 => [0, 0, 0, 0],
+            i => palette[i],
+        })
+        .collect::<Vec<_>>();
+
+    let img = &RgbaImage::from_raw(width as u32, height as u32, rgba).unwrap();
+
+    let algo = Texture::from_image(
+        &mut window.create_texture_context(),
+        img,
+        &TextureSettings::new().filter(piston_window::Filter::Nearest),
+    )
+    .unwrap();
+
+    let texture_rc = Rc::new(algo);
+    let mut sprite = Sprite::from_texture(texture_rc.clone());
+
+    // ---------------------------
+    // ---------------------------
+    // ---------------------------
 
     let mut input_manager = InputManager::new();
     let mut ticks = 0;
 
     let tree = commands::create_command_tree("example");
-
     tree.print(0);
 
     let mut debug = false;
 
-    window.events.set_max_fps(FPS);
-    window.events.set_ups(FPS);
     let mut total_frames = -1;
     let mut action_timer = 0;
     let mut enable_action_timer = false;
     let mut last_print_time = Instant::now();
 
-    // --------------------------------------------
-    // - LOOP WINDOW
-    // --------------------------------------------
     while let Some(e) = window.next() {
         if let Some(_) = e.update_args() {
             input_manager.update_hold_key();
@@ -120,7 +150,6 @@ fn main() {
             }
         }
 
-        // Read Key pressed
         if let Some(Button::Keyboard(key)) = e.press_args() {
             match key {
                 Key::Up
@@ -156,7 +185,6 @@ fn main() {
             }
         }
 
-        // Read Key released
         if let Some(Button::Keyboard(key)) = e.release_args() {
             match key {
                 Key::Up
@@ -178,10 +206,12 @@ fn main() {
             }
         }
 
-        // Update the window image, redraw all the sprites
         window.draw_2d(&e, |c, g, _| {
             clear([1.0; 4], g);
-            sprite.draw(c.transform.trans(sprite_coord.0, sprite_coord.1), g);
+
+            sprite.set_scale(2.0, 2.0);
+            sprite.set_position(100.0, 100.0);
+            sprite.draw(c.transform, g)
         });
     }
 }

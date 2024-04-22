@@ -6,12 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+image = "0.24.9"
 piston = "*"
 piston_window = "*"
 piston2d-graphics = "*"
 piston2d-sprite = "*"
 pistoncore-glutin_window = "*"
 piston2d-opengl_graphics = "*"
-winit = "*"
+winit = "0.28.7"
 find_folder = "*"
 regex ="*"
+byteorder = "*"
+pcx = "*"
