@@ -53,35 +53,35 @@ enum Direction {
 ///
 /// This struct holds the current input state of a player, indicating whether
 /// specific keys or directional inputs are being pressed.
-struct PlayerInput {
+pub struct PlayerInput {
     /// Light Punch key state
-    lp: bool,
+    pub lp: bool,
     /// Medium Punch key state
-    mp: bool,
+    pub mp: bool,
     /// Heavy Punch key state
-    hp: bool,
+    pub hp: bool,
     /// Light Kick key state
-    lk: bool,
+    pub lk: bool,
     /// Medium Kick key state
-    mk: bool,
+    pub mk: bool,
     /// Heavy Kick key state
-    hk: bool,
+    pub hk: bool,
     /// Forward key state
-    f: bool,
+    pub f: bool,
     /// Up key state
-    u: bool,
+    pub u: bool,
     /// Backward key state
-    b: bool,
+    pub b: bool,
     /// Down key state
-    d: bool,
+    pub d: bool,
     /// Up-Backward key state
-    ub: bool,
+    pub ub: bool,
     /// Up-Forward key state
-    uf: bool,
+    pub uf: bool,
     /// Down-Forward key state
-    df: bool,
+    pub df: bool,
     /// Down-Backward key state
-    db: bool,
+    pub db: bool,
 }
 
 /// Represents an input key along with its buffer time.
@@ -119,7 +119,7 @@ pub struct CommandInput {
 /// command inputs for processing.
 pub struct InputManager {
     /// Player input state
-    player_input: PlayerInput,
+    pub player_input: PlayerInput,
     /// Buffer for storing command inputs
     input_buffer: Vec<CommandInput>,
 }

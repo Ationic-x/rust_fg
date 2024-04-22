@@ -1315,6 +1315,7 @@ version = "0.1.0"
 dependencies = [
  "byteorder",
  "find_folder",
+ "gfx_device_gl",
  "image",
  "pcx",
  "piston",

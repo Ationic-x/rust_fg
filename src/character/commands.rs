@@ -1,6 +1,6 @@
 use crate::{input, CK};
 
-use input::manage::CommandInput;
+use input::manager::CommandInput;
 use std::{
     collections::HashSet,
     fs::File,

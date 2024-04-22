@@ -4,13 +4,12 @@ pub mod input;
 extern crate image;
 extern crate piston_window;
 
-use character::commands;
-use character::decoder;
-use image::RgbaImage;
-use input::manage::InputManager;
+use character::{commands, sff};
+use input::manager::InputManager;
 use piston_window::*;
 use sprite::*;
-use std::{rc::Rc, time::Instant};
+use std::time::Duration;
+use std::time::Instant;
 use winit::window::WindowButtons;
 
 const FPS: u64 = 60;
@@ -45,75 +44,23 @@ fn main() {
     window.events.set_max_fps(FPS);
     window.events.set_ups(FPS);
 
-    let assets = std::env::current_dir().unwrap().join("src").join("assets");
+    // ---------------------------
+    // ---------------------------
+    // ---------------------------
+
+    let sprite_manager = sff::manager::SpriteManager::new("sf3_ken".to_string()).unwrap();
+
+    let mut context = window.create_texture_context();
+
+    let mut sprite = Sprite::from_texture(sprite_manager.get_texture(&mut context, 105, 2));
+    sprite.set_anchor(0.0, 1.0);
+    sprite.set_scale(1.5, 1.5);
 
     // ---------------------------
     // ---------------------------
     // ---------------------------
 
-    let sff_path = assets.join("sf3_ken.sff");
-    let sff = std::fs::read(sff_path).expect("Failed to read SFF file");
-    let sff = match decoder::Decoder::decode(&sff) {
-        Ok(decoded_data) => decoded_data,
-        Err(error) => {
-            println!("Error al decodificar sff: {:?}", error);
-            return;
-        }
-    };
-    println!("{}-{}", sff.groups_count(), sff.images_count());
-    let sprites = sff.sprites().collect::<Vec<_>>();
-    let sprited = sprites
-        .iter()
-        .find(|sprite| sprite.id().group == 105 && sprite.id().image == 2)
-        .unwrap();
-    println!("{:?}", sprited.id());
-
-    let mut pcx = match pcx::Reader::new(sprited.raw_data()) {
-        Ok(pcx) => pcx,
-        Err(error) => {
-            println!("Error al decodificar PCX: {:?}", error);
-            return;
-        }
-    };
-
-    let width = pcx.width() as usize;
-    let height = pcx.height() as usize;
-
-    let palette = sprited
-        .palette()
-        .chunks_exact(3)
-        .map(|i| [i[0], i[1], i[2], 255])
-        .collect::<Vec<_>>();
-
-    let mut data = vec![0; width * height];
-    for row in 0..height {
-        pcx.next_row_paletted(&mut data[row * width..row * width + width])
-            .expect("Pallete");
-    }
-
-    let rgba = data
-        .into_iter()
-        .flat_map(|i| match i as usize {
-            0 => [0, 0, 0, 0],
-            i => palette[i],
-        })
-        .collect::<Vec<_>>();
-
-    let img = &RgbaImage::from_raw(width as u32, height as u32, rgba).unwrap();
-
-    let algo = Texture::from_image(
-        &mut window.create_texture_context(),
-        img,
-        &TextureSettings::new().filter(piston_window::Filter::Nearest),
-    )
-    .unwrap();
-
-    let texture_rc = Rc::new(algo);
-    let mut sprite = Sprite::from_texture(texture_rc.clone());
-
-    // ---------------------------
-    // ---------------------------
-    // ---------------------------
+    let mut coord = (0.0,512.0);
 
     let mut input_manager = InputManager::new();
     let mut ticks = 0;
@@ -128,16 +75,43 @@ fn main() {
     let mut enable_action_timer = false;
     let mut last_print_time = Instant::now();
 
+    let mut last_update = Instant::now();
+    let mut total_time = Duration::new(0, 0);
+
     while let Some(e) = window.next() {
         if let Some(_) = e.update_args() {
+            // Delta time
+            let delta_time = last_update.elapsed();
+            last_update = Instant::now();
+            total_time += delta_time;
+            //
+
             input_manager.update_hold_key();
             ticks += 1u16;
+            
             if action_timer < PAUSE_DURATION {
                 action_timer += 1;
             } else if enable_action_timer {
                 input_manager.walk_input_buffer(&tree);
                 enable_action_timer = false;
             }
+
+            // Commmon moves
+            let player_input = &input_manager.player_input;
+            let speed = 150.0; // Velocidad en unidades por segundo
+            let delta_seconds = delta_time.as_secs_f64();
+            if player_input.f {
+                coord.0 += speed * delta_seconds;
+            }
+            if player_input.b {
+                coord.0 -= speed * delta_seconds;
+                sprite.set_texture(sprite_manager.get_texture(&mut context, 10, 1));
+            }
+            if player_input.u {
+                coord.1 -= speed * delta_seconds;
+            }
+            //
+
             if debug {
                 total_frames += 1;
                 let elapsed_seconds = last_print_time.elapsed().as_secs();
@@ -209,9 +183,8 @@ fn main() {
         window.draw_2d(&e, |c, g, _| {
             clear([1.0; 4], g);
 
-            sprite.set_scale(2.0, 2.0);
-            sprite.set_position(100.0, 100.0);
-            sprite.draw(c.transform, g)
+            sprite.set_position(coord.0, coord.1);
+            sprite.draw(c.transform, g);
         });
     }
 }
