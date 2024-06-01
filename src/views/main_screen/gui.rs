@@ -25,9 +25,9 @@ pub fn draw_options(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut G
         let transform = c.transform.trans(
             WINDOW_WIDTH / 2.0 - text_width / 2.0,
             OPTION_MARGIN_TOP + i as f64 * (text_height + PADDING)
-        );
+        ).zoom(0.5);
 
-        graphics::text::Text::new_color(color, TEXT_SIZE)
+        graphics::text::Text::new_color(color, TEXT_SIZE * 2)
             .draw(
                 option,
                 glyphs,
@@ -45,9 +45,9 @@ pub fn draw_title(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Gly
     let text_width = glyphs.width(TITLE_SIZE, TITLE_GAME).unwrap();
     let text_height = TITLE_SIZE as f64;
 
-    let transform = c.transform.trans(WINDOW_WIDTH / 2.0  - text_width / 2.0, WINDOW_HEIGHT / 4.0 + text_height / 4.0);
+    let transform = c.transform.trans(WINDOW_WIDTH / 2.0  - text_width / 2.0, WINDOW_HEIGHT / 4.0 + text_height / 4.0).zoom(0.5);
 
-    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE)
+    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE * 2)
         .draw(
             TITLE_GAME,
             glyphs,

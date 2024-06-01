@@ -39,7 +39,7 @@ pub fn draw_color_pick(
 
     let transform = c
         .transform
-        .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 20.0);
+        .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 20.0).zoom(0.5);
     
     let color;
     if picked {
@@ -48,7 +48,7 @@ pub fn draw_color_pick(
         color = [0.0, 0.0, 0.0, 1.0]
     }
 
-    text::Text::new_color(color, COLOR_TEXT_SIZE)
+    text::Text::new_color(color, COLOR_TEXT_SIZE * 2)
         .draw(&text, glyphs, &c.draw_state, transform, g)
         .unwrap();
 
@@ -107,9 +107,9 @@ pub fn draw_preview(
     let text = roster[index].get_name();
     let transform = c
         .transform
-        .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 20.0);
+        .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 20.0).zoom(0.5);
 
-    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE)
+    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE * 2)
         .draw(&text, glyphs, &c.draw_state, transform, g)
         .unwrap();
 

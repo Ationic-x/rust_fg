@@ -42,12 +42,15 @@ impl Screen for MainScreen {
                     self.selected_index += 1;
                 }
             }
-            Key::Return => {
+            Key::Return | Key::Z => {
                 match self.selected_index {
                     0 => self.event_sender.send(Event::ChangeScreen(ScreenType::Roster)).unwrap(),
                     1 => {process::exit(0)},
                     _ => (),
                 }
+            }
+            Key::Escape => {
+                process::exit(0);
             }
             _ => (),
         }

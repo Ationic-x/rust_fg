@@ -421,15 +421,14 @@ impl InputManager {
         }
     }
 
-    pub fn flip(&mut self){
+    pub fn flip(&mut self) {
         for inputs in &mut self.input_buffer {
             for key in &mut inputs.keys {
                 if key.cmd_key == CK::B {
                     key.cmd_key = CK::F;
-                } 
-                if key.cmd_key == CK::F {
+                } else if key.cmd_key == CK::F {
                     key.cmd_key = CK::B;
-                } 
+                }
             }
         }
         let f = self.player_input.f;
@@ -437,7 +436,6 @@ impl InputManager {
         self.player_input.b = f;
         self.player_input.f = b;
     }
-
 
     /// Traverses the input buffer and checks for valid input sequences.
     ///
@@ -451,7 +449,7 @@ impl InputManager {
     pub fn walk_input_buffer(&mut self, tree: &CommandNode) -> String {
         let input_buffer = &mut self.input_buffer;
         for pos in 0..input_buffer.len() {
-            for input in &mut *input_buffer{
+            for input in &mut *input_buffer {
                 input.set_found(false);
             }
             if let Some(input) = input_buffer.get_mut(pos) {

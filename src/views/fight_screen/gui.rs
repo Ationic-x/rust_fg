@@ -145,9 +145,9 @@ pub fn draw_timer(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Gly
 pub fn draw_fps(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, fps: f64) {
     let text = format!("FPS({})", fps);
 
-    let transform = c.transform.trans(0.0, 200.0);
+    let transform = c.transform.trans(0.0, 200.0).zoom(0.5);
 
-    text::Text::new_color([0.0, 1.0, 0.0, 1.0], FPS_TEXT_SIZE)
+    text::Text::new_color([0.0, 1.0, 0.0, 1.0], FPS_TEXT_SIZE * 2)
         .draw(
             &text,
             glyphs,
@@ -177,9 +177,9 @@ pub fn end_round(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyp
     let text_width = glyphs.width(TEXT_SIZE, text).unwrap();
     let text_height = TEXT_SIZE as f64;
 
-    let transform = c.transform.trans(500.0 / 2.0  - text_width / 2.0, 500.0 / 2.0 + text_height / 4.0);
+    let transform = c.transform.trans(500.0 / 2.0  - text_width / 2.0, 500.0 / 2.0 + text_height / 4.0).zoom(0.5);
 
-    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE)
+    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE * 2)
         .draw(
             &text,
             glyphs,

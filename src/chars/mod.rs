@@ -45,6 +45,7 @@ pub trait Character {
     fn has_control(&self) -> bool;
     fn get_flip(&self) -> bool;
     fn get_flip_x(&self) -> bool;
+    fn get_wall(&self) -> bool;
     fn get_hit(&self) -> i32;
     fn get_life(&self) -> i32;
     fn get_win(&self) -> bool;

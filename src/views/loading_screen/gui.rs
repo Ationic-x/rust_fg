@@ -10,9 +10,9 @@ pub fn draw_loading(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut G
     let text_width = glyphs.width(LOADING_SIZE, LOADING_TEXT).unwrap();
     let text_height = LOADING_SIZE as f64;
 
-    let transform = c.transform.trans(WINDOW_SIZE[0] / 2.0  - text_width / 2.0, WINDOW_SIZE[1] / 2.0 - text_height / 2.0);
+    let transform = c.transform.trans(WINDOW_SIZE[0] / 2.0  - text_width / 2.0, WINDOW_SIZE[1] / 2.0 - text_height / 2.0).zoom(0.5);
 
-    text::Text::new_color([1.0, 1.0, 1.0, 1.0], LOADING_SIZE)
+    text::Text::new_color([1.0, 1.0, 1.0, 1.0], LOADING_SIZE * 2)
         .draw(
             LOADING_TEXT,
             glyphs,

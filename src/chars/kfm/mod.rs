@@ -44,6 +44,7 @@ impl Character for CharData {
             fall: false,
             win: false,
             lose: false,
+            wall: false,
         }
     }
 
@@ -207,23 +208,25 @@ impl Character for CharData {
     fn add_pos_x(&mut self, x: f64) {
         if self.current_flip {
             self.x -= x;
-            if self.x < self.offset_x {
+            if x > 0.0 && self.x < self.offset_x || x < 0.0 && self.x > WINDOW_SIZE - self.offset_x  {
+                self.wall = true;
                 self.x += x;
+            } else {
+                self.wall = false;
             }
         } else {
             self.x += x;
-            if self.x > WINDOW_SIZE - self.width as f64 + self.offset_x {
-                self.vel_x -= x;
+            if x < 0.0 && self.x < self.offset_x || x > 0.0 && self.x > WINDOW_SIZE - self.offset_x {
+                self.wall = true;
+                self.x -= x;
+            } else {
+                self.wall = false;
             }
         }
     }
 
     fn set_vel_x(&mut self, x: f64) {
-        if self.current_flip {
-            self.vel_x = -x;
-        } else {
-            self.vel_x = x;
-        }
+        self.vel_x = x;
     }
 
     fn set_hit(&mut self, hit_no: i32) {
@@ -240,15 +243,10 @@ impl Character for CharData {
         } else {
             self.air_time += 1;
         }
-        self.x += self.vel_x;
-        if self.vel_x < 0.0 && self.x < self.offset_x
-            || self.vel_x > 0.0 && self.x > WINDOW_SIZE - self.offset_x
-        {
-            self.x -= self.vel_x;
-            if self.state_no >= 5000 {
-                self.vel_x = -self.vel_x;
-            }
+        if self.wall && self.vel_x < 0.0 && self.state_no > 4999{
+            self.vel_x = -self.vel_x;
         }
+        self.add_pos_x(self.vel_x);
         self.y += self.vel_y;
     }
 
@@ -265,11 +263,7 @@ impl Character for CharData {
     }
 
     fn add_vel_x(&mut self, x: f64) {
-        if self.current_flip {
-            self.vel_x += -x;
-        } else {
-            self.vel_x += x;
-        }
+        self.vel_x += x;
     }
 
     fn add_vel_y(&mut self, y: f64) {
@@ -347,6 +341,10 @@ impl Character for CharData {
     fn set_width(&mut self, width: u16) {
         self.width = width;
     }
+
+    fn get_wall(&self) -> bool {
+        self.wall
+    }
 }
 
 pub struct CharData {
@@ -386,6 +384,7 @@ pub struct CharData {
     win: bool,
     lose: bool,
     width: u16,
+    wall: bool,
 }
 
 pub mod char;

@@ -348,6 +348,7 @@ fn default_end_action(char: &mut CharData) {
     char.action = "".to_string();
     char.ctrl = true;
     char.fall = false;
+    char.run = false;
     trigger(char);
 }
 
@@ -590,6 +591,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.set_state_no(state_no + 1);
         }
         800 => {
+            char.add_pos_x(-30.0);
             target.set_x(char.x + if char.is_flipped() { -30.0 } else { 30.0 });
             char.state_no = 810;
             target.add_life(-78);
@@ -1493,7 +1495,7 @@ fn call_state(char: &mut CharData) {
             }
             if char.anim_elem == 6 {
                 // Original 12
-                char.add_pos_x(1.0);
+                char.add_vel_x(1.0);
             }
             if char.anim_time == 0 {
                 default_end_action(char);

@@ -5,7 +5,7 @@ use image::RgbaImage;
 use piston_window::{G2dTextureContext, Texture, TextureSettings};
 use sprite::Sprite;
 
-use crate::chars;
+use crate::chars::{self, State};
 
 use super::{
     air::{self, manager::AnimationTable},
@@ -53,27 +53,31 @@ impl Character {
 
     pub fn normal_collision_handler(p1: &mut Character, p2: &mut Character) {
         let p1_vel = p1.char.get_vel();
-        let p1_x = p1.char.get_x();
         let p2_vel = p2.char.get_vel();
-        let p2_x = p2.char.get_x();
         let sum_vel = p1_vel + p2_vel;
+        if p2.char.get_state() == &State::L {
+            p1.char.add_pos_x(-sum_vel);
+            return;
+        }
+        if p1.char.get_state() == &State::L {
+            p2.char.add_pos_x(-sum_vel);
+            return;
+        }
         if p1_vel > p2_vel {
-            if p2_x > p2.char.get_offset_x() && p2_x < 512.0 - p2.char.get_offset_x() {
+            p2.char.add_pos_x(-sum_vel);
+            if p2.char.get_wall() {
+                p1.char.add_pos_x(-sum_vel);
+            } else {
                 p1.char.add_pos_x(-p2_vel);
+            }
+        } else if p2_vel > p1_vel {
+            p1.char.add_pos_x(-sum_vel);
+            if p1.char.get_wall() {
                 p2.char.add_pos_x(-sum_vel);
             } else {
-                p1.char.add_pos_x(-sum_vel);
-            }
-        }
-        if p2_vel > p1_vel {
-            if p1_x > p1.char.get_offset_x() && p1_x < 512.0 - p1.char.get_offset_x() {
-                p1.char.add_pos_x(-sum_vel);
                 p2.char.add_pos_x(-p1_vel);
-            } else {
-                p2.char.add_pos_x(-sum_vel);
             }
-        }
-        if p1_vel == p2_vel {
+        } else {
             p1.char.add_pos_x(-p1_vel);
             p2.char.add_pos_x(-p2_vel);
         }
