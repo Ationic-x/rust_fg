@@ -17,7 +17,7 @@ pub struct MainScreen{
 
 impl Screen for MainScreen {
     fn new(window: &mut PistonWindow, event_sender: Sender<Event>) -> Self where Self: Sized {
-        let glyphs = Glyphs::new("assets\\fonts\\OpenSans-Regular.ttf", window.create_texture_context(), TextureSettings::new()).unwrap();
+        let glyphs = Glyphs::new("assets\\fonts\\OpenSans-ExtraBold.ttf", window.create_texture_context(), TextureSettings::new()).unwrap();
 
         Self {
             glyphs,

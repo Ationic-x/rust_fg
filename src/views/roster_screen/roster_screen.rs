@@ -40,7 +40,7 @@ impl Screen for RosterScreen {
         let mut roster = Vec::new();
 
         let glyphs = Glyphs::new(
-            "assets\\fonts\\OpenSans-Regular.ttf",
+            "assets\\fonts\\OpenSans-ExtraBold.ttf",
             window.create_texture_context(),
             TextureSettings::new(),
         )
