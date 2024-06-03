@@ -29,13 +29,29 @@ pub fn draw_color_pick(
     picked: bool,
 ) {
     let glyphs = preloads.get_mut_ref_fonts().get_mut(0).unwrap();
+    let text_pick = glyphs.width(15, "Pick a color").unwrap();
+    let x;
+    if first_player {
+        x = PREVIEW_SIZE[0] + 10.0;
+    } else {
+        x = WINDOW_SIZE[0] - PREVIEW_SIZE[0] - text_pick - 10.0;
+    }
+
+    let transform = c
+        .transform
+        .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 4.0).zoom(0.5);
+    
+    text::Text::new_color([1.0, 1.0, 1.0, 1.0], 15 * 2)
+        .draw("Pick a color", glyphs, &c.draw_state, transform, g)
+        .unwrap();
+    
     let text = format!("Color {}", index);
     let text_width = glyphs.width(COLOR_TEXT_SIZE, &text).unwrap();
     let x;
     if first_player {
-        x = PREVIEW_SIZE[0] + PREVIEW_SIZE[0] / 3.0;
+        x = PREVIEW_SIZE[0] + 10.0;
     } else {
-        x = WINDOW_SIZE[0] - PREVIEW_SIZE[0] - text_width - PREVIEW_SIZE[0] / 3.0;
+        x = WINDOW_SIZE[0] - PREVIEW_SIZE[0] - text_width - 10.0;
     }
 
     let transform = c
