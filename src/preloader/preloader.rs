@@ -3,10 +3,7 @@ use std::fs;
 use gfx_device_gl::Resources;
 use piston_window::{Flip, Glyphs, PistonWindow, Texture, TextureSettings};
 
-use crate::{
-    chars,
-    player::character::sff::{decoder::Sff, error::show_error_popup},
-};
+use crate::{chars, error::{pop_up::show_error_popup, preload_error::PreloadError}, player::character::sff::decoder::Sff};
 
 pub struct Preloads {
     backgrounds: Vec<Texture<Resources>>,
@@ -15,44 +12,55 @@ pub struct Preloads {
 }
 
 impl Preloads {
-    pub fn new(window: &mut PistonWindow) -> Self {
+    pub fn new(window: &mut PistonWindow) -> Result<Self, PreloadError> {
         let mut fonts = Vec::new();
-        fonts.push(
-            Glyphs::new(
-                "assets\\fonts\\OpenSans-ExtraBold.ttf",
-                window.create_texture_context(),
-                TextureSettings::new(),
-            )
-            .unwrap(),
-        );
-        fonts.push(
-            Glyphs::new(
-                "assets\\fonts\\OpenSans-Regular.ttf",
-                window.create_texture_context(),
-                TextureSettings::new(),
-            )
-            .unwrap(),
-        );
-
         let mut backgrounds = Vec::new();
-        backgrounds.push(
-            Texture::from_path(
-                &mut window.create_texture_context(),
-                "assets\\images\\background_1.png",
-                Flip::None,
-                &TextureSettings::new(),
-            )
-            .unwrap(),
-        );
-        backgrounds.push(
-            Texture::from_path(
-                &mut window.create_texture_context(),
-                "assets\\images\\background_3.png",
-                Flip::None,
-                &TextureSettings::new(),
-            )
-            .unwrap(),
-        );
+
+        let font = "assets\\fonts\\OpenSans-ExtraBold.ttf";
+        match Glyphs::new(
+            font,
+            window.create_texture_context(),
+            TextureSettings::new(),
+        ) {
+            Ok(glyphs) => {
+                fonts.push(glyphs);
+            }
+            Err(_) => return Err(PreloadError::FontNotFound(font.to_string())),
+        }
+
+        let font = "assets\\fonts\\OpenSans-Regular.ttf";
+        match Glyphs::new(
+            font,
+            window.create_texture_context(),
+            TextureSettings::new(),
+        ) {
+            Ok(glyphs) => {
+                fonts.push(glyphs);
+            }
+            Err(_) => return Err(PreloadError::FontNotFound(font.to_string())),
+        }
+
+        let background = "assets\\images\\background_1.png";
+        match Texture::from_path(
+            &mut window.create_texture_context(),
+            background,
+            Flip::None,
+            &TextureSettings::new(),
+        ) {
+            Ok(texture) => backgrounds.push(texture),
+            Err(_) => return Err(PreloadError::BackgroundNotFound(background.to_string())),
+        };
+
+        let background = "assets\\images\\background_3.png";
+        match Texture::from_path(
+            &mut window.create_texture_context(),
+            background,
+            Flip::None,
+            &TextureSettings::new(),
+        ) {
+            Ok(texture) => backgrounds.push(texture),
+            Err(_) => return Err(PreloadError::BackgroundNotFound(background.to_string())),
+        };
 
         let mut roster = Vec::new();
 
@@ -81,11 +89,11 @@ impl Preloads {
             }
         }
 
-        Self {
+        Ok(Self {
             backgrounds,
             fonts,
             roster,
-        }
+        })
     }
 
     pub fn get_mut_ref_background(&self) -> &Vec<Texture<Resources>> {

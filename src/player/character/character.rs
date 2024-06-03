@@ -5,7 +5,10 @@ use image::RgbaImage;
 use piston_window::{G2dTextureContext, Texture, TextureSettings};
 use sprite::Sprite;
 
-use crate::chars::{self, State};
+use crate::{
+    chars::{self, State},
+    error::pop_up::show_error_popup,
+};
 
 use super::{
     air::{self, manager::AnimationTable},
@@ -33,8 +36,23 @@ impl Character {
 
         let char = chars::get_char(char_name).unwrap();
         let char_path = "src/chars/".to_string() + char_name + "/";
-        let mut at = air::manager::parse_air(&(char_path.clone() + char.get_air_name() + ".air"));
-        let cmd = cmd::manager::create_command_tree(&(char_path + char.get_cmd_name() + ".cmd"));
+        let mut at =
+            match air::manager::parse_air(&(char_path.clone() + char.get_air_name() + ".air")) {
+                Ok(at) => at,
+                Err(err) => {
+                    show_error_popup(&err);
+                    std::process::exit(1);
+                }
+            };
+
+        let cmd =
+            match cmd::manager::create_command_tree(&(char_path + char.get_cmd_name() + ".cmd")) {
+                Ok(at) => at,
+                Err(err) => {
+                    show_error_popup(&err);
+                    std::process::exit(1);
+                }
+            };
 
         at.set_sff(
             char_name,

@@ -1,7 +1,7 @@
-use crate::{player::input::manager::CommandInput, CK};
+use crate::{error::cmd_error::CmdError, player::input::manager::CommandInput, CK};
 
 use regex::Regex;
-use std::{collections::HashSet, io};
+use std::collections::HashSet;
 
 /// Represents a command, which is a sequence of command elements forming a movement execution.
 /// This struct holds the list of command elements and the name of the command.
@@ -276,7 +276,7 @@ impl CommandNode {
 ///
 /// An `io::Result` containing a vector of `Command` instances if the file is successfully read and parsed,
 /// otherwise an `io::Error` indicating the encountered issue.
-fn read_command_file(lines: &Vec<&str>) -> io::Result<Vec<Command>> {
+fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
     let mut commands: Vec<Command> = Vec::new();
 
     let mut i = 0;
@@ -322,7 +322,7 @@ fn read_command_file(lines: &Vec<&str>) -> io::Result<Vec<Command>> {
             _ => {}
         }
     }
-    Ok(commands)
+    commands
 }
 
 /// Parses a command sequence and populates the corresponding command with the parsed details.
@@ -499,22 +499,19 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
 /// # Returns
 ///
 /// A `CommandNode` representing the root of the command tree with her branches for the specified character.
-pub fn create_command_tree(cmd: &str) -> CommandNode {
-    let content = std::fs::read_to_string(cmd).expect("Cant read the file");
+pub fn create_command_tree(cmd: &str) -> Result<CommandNode, CmdError> {
+    let content = match std::fs::read_to_string(cmd) {
+        Ok(content) => content,
+        Err(_) => return Err(CmdError::NotFound(cmd.to_string())),
+    };
     let lines: Vec<&str> = content.lines().map(|line| line.trim()).collect();
     let mut tree = CommandNode::new();
 
-    match read_command_file(&lines) {
-        Ok(commands) => {
-            for command in &commands {
-                tree.insert(command, 0);
-            }
-            tree.sort();
-            return tree;
-        }
-        Err(err) => {
-            eprintln!("Error reading the command file: {}", err);
-            std::process::exit(1);
-        }
+    let commands = read_command_file(&lines);
+
+    for command in &commands {
+        tree.insert(command, 0);
     }
+    tree.sort();
+    return Ok(tree);
 }

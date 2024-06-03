@@ -13,7 +13,8 @@ use gfx_device_gl::Resources;
 use image::RgbaImage;
 use piston_window::{G2dTextureContext, TextureSettings};
 
-use super::error::DecodeError;
+use crate::error::sff_error::SffError;
+
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SpriteId {
@@ -148,7 +149,7 @@ impl Sprite {
         ofs: &mut u32,
         size: &mut u32,
         link: &mut u16,
-    ) -> Result<&mut Self, DecodeError> {
+    ) -> Result<&mut Self, SffError> {
         *ofs = bytes.read_u32::<LittleEndian>()?;
         *size = bytes.read_u32::<LittleEndian>()?;
         for ele in &mut self.offset {
@@ -169,7 +170,7 @@ impl Sprite {
         prev: &Option<Sprite>,
         pl: &mut PaletteList,
         c00: bool,
-    ) -> Result<&mut Self, DecodeError> {
+    ) -> Result<&mut Self, SffError> {
         if next_subheader as i64 > *offset {
             datasize = next_subheader - *offset as u32;
         }
@@ -317,7 +318,7 @@ impl Sprite {
         tofs: u32,
         link: &mut u16,
         pl: &PaletteList,
-    ) -> Result<&mut Self, DecodeError> {
+    ) -> Result<&mut Self, SffError> {
         self.group = bytes.read_i16::<LittleEndian>()?;
         self.number = bytes.read_i16::<LittleEndian>()?;
         for ele in &mut self.size {
@@ -355,7 +356,7 @@ impl Sprite {
         offset: i64,
         mut datasize: u32,
         context: &mut G2dTextureContext
-    ) -> Result<&mut Self, DecodeError> {
+    ) -> Result<&mut Self, SffError> {
         let is_raw = false;
         let mut px: Vec<u8>;
 
@@ -374,7 +375,7 @@ impl Sprite {
                     self.set_raw(px);
                 }
                 _ => {
-                    return Err(DecodeError::UknownColorDepth(self.col_depth));
+                    return Err(SffError::UknownColorDepth(self.col_depth));
                 }
             }
         } else {
@@ -427,7 +428,7 @@ impl Sprite {
                                     break;
                                 }
                             }
-                            Err(err) => return Err(DecodeError::InvalidData(err)),
+                            Err(err) => return Err(SffError::InvalidData(err)),
                         }
                     }
 
@@ -455,7 +456,7 @@ impl Sprite {
             //         is_raw = true;
             //     }
             //     _ => {
-            //         return Err(DecodeError::InvalidSignature);
+            //         return Err(SffError::InvalidSignature);
             //     }
             // }
         }
@@ -715,7 +716,7 @@ impl Sff {
         }
     }
 
-    pub fn preload_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, DecodeError>  {
+    pub fn preload_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, SffError>  {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -728,7 +729,7 @@ impl Sff {
         let sff_path = assets.join(filename);
 
         if !sff_path.exists() {
-            return Err(DecodeError::NotFound(sff_path));
+            return Err(SffError::NotFound(sff_path));
         }
         
         match sff.header.read(sff_path.clone()) {
@@ -750,7 +751,7 @@ impl Sff {
         Ok(sff)
     }
 
-    pub fn load_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, DecodeError> {
+    pub fn load_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, SffError> {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -763,7 +764,7 @@ impl Sff {
         let sff_path = assets.join(filename);
 
         if !sff_path.exists() {
-            return Err(DecodeError::NotFound(sff_path));
+            return Err(SffError::NotFound(sff_path));
         }
 
         match sff.header.read(sff_path.clone()) {
@@ -790,7 +791,7 @@ impl Sff {
         sff_path: PathBuf,
         char: bool,
         preload: bool,
-    ) -> Result<(), DecodeError> {
+    ) -> Result<(), SffError> {
         let mut sprite_list: Vec<Sprite> =
             vec![Sprite::new(); self.header.number_of_sprites as usize];
         let mut prev: Option<Sprite> = None;
@@ -831,7 +832,7 @@ impl Sff {
                     )?;
                 }
                 _ => {
-                    return Err(DecodeError::UnsupportedHeaderVersion(self.header.ver0));
+                    return Err(SffError::UnsupportedHeaderVersion(self.header.ver0));
                 }
             }
             if size == 0 {
@@ -862,7 +863,7 @@ impl Sff {
                         sprite_list[i].read_v2(&mut bytes, xofs as i64, size, &mut self.context)?;
                     }
                     _ => {
-                        return Err(DecodeError::UnsupportedHeaderVersion(self.header.ver0));
+                        return Err(SffError::UnsupportedHeaderVersion(self.header.ver0));
                     }
                 }
                 if let Some(sprite) = sprite_list.get(i) {
@@ -902,7 +903,7 @@ impl Sff {
         }
     }
 
-    fn configure_pals_v2(&mut self, sff_path: PathBuf) -> Result<(), DecodeError> {
+    fn configure_pals_v2(&mut self, sff_path: PathBuf) -> Result<(), SffError> {
         let mut unique_pals: HashMap<[i16; 2], u16> = HashMap::new();
         let data = std::fs::read(sff_path)?;
         let mut bytes = Cursor::new(&data);
@@ -992,11 +993,11 @@ impl<'a> SffHeader {
         }
     }
 
-    fn read(&mut self, sff_path: PathBuf) -> Result<(), DecodeError> {
+    fn read(&mut self, sff_path: PathBuf) -> Result<(), SffError> {
         let data = std::fs::read(sff_path)?;
 
         if &data[0..12] != b"ElecbyteSpr\0" {
-            return Err(DecodeError::InvalidSignature);
+            return Err(SffError::InvalidSignature);
         }
 
         let mut bytes = Cursor::new(&data);
@@ -1034,7 +1035,7 @@ impl<'a> SffHeader {
                 self.tofs = bytes.read_u32::<LittleEndian>()?;
             }
             _ => {
-                return Err(DecodeError::UnsupportedVersion(version));
+                return Err(SffError::UnsupportedVersion(version));
             }
         }
 

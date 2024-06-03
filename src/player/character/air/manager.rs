@@ -4,7 +4,11 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::{chars::Character, player::character::sff::{decoder::Sff, error::show_error_popup}};
+use crate::{
+    chars::Character,
+    error::{air_error::AirError, pop_up::show_error_popup},
+    player::character::sff::decoder::Sff,
+};
 use gfx_device_gl::Resources;
 use piston_window::{G2dTextureContext, Texture};
 use sprite::Sprite;
@@ -302,34 +306,43 @@ impl AnimationTable {
     }
 
     pub fn set_palette(&mut self, palette: usize) {
-        self.sff.as_mut().unwrap().lock().unwrap().set_palette(palette);
+        self.sff
+            .as_mut()
+            .unwrap()
+            .lock()
+            .unwrap()
+            .set_palette(palette);
     }
 
     pub fn get_sprite(&self) -> MutexGuard<Sprite<Texture<Resources>>> {
         self.spr.as_ref().unwrap().lock().unwrap()
     }
 
-    fn read_action(&mut self, lines: &Vec<&str>, i: &mut usize) -> Option<Animation> {
+    fn read_action(
+        &mut self,
+        lines: &Vec<&str>,
+        i: &mut usize,
+    ) -> Result<Option<Animation>, AirError> {
         while *i < lines.len() {
             let mut a;
-            if let Some(a1) = read_action(&lines, i) {
+            if let Some(a1) = read_action(&lines, i)? {
                 a = a1.1.clone();
                 if let Some(tmp) = self.animations.get(&a1.0) {
-                    return Some(tmp.clone());
+                    return Ok(Some(tmp.clone()));
                 }
                 self.animations.insert(a1.0, a1.1.clone());
                 while a1.1.frames.is_empty() && *i < lines.len() {
-                    if let Some(a2) = self.read_action(lines, i) {
+                    if let Ok(Some(a2)) = self.read_action(lines, i) {
                         a = a2;
                         break;
                     }
                     *i += 1;
                 }
-                return Some(a);
+                return Ok(Some(a));
             }
             *i += 1;
         }
-        None
+        Ok(None)
     }
 
     pub fn set_sprite(&mut self, spr: sprite::Sprite<Texture<Resources>>) {
@@ -352,12 +365,7 @@ impl AnimationTable {
         char: bool,
         context: G2dTextureContext,
     ) {
-        match Sff::load_sff(
-            char_name,
-            filename,
-            char,
-            context,
-        ) {
+        match Sff::load_sff(char_name, filename, char, context) {
             Ok(sff) => self.sff = Some(Arc::new(Mutex::new(sff))),
             Err(err) => {
                 show_error_popup(&err);
@@ -392,13 +400,9 @@ impl AnimationTable {
             char.set_new_anim(false);
             char.set_hit(-1);
             char.set_time(-1);
-            self.spr.as_mut().unwrap().lock().unwrap().set_flip_x(flip);
-            self.spr
-                .as_mut()
-                .unwrap()
-                .lock()
-                .unwrap()
-                .set_anchor(if flip { 1.0 } else { 0.0 }, 0.0);
+            let mut spr = self.spr.as_mut().unwrap().lock().unwrap();
+            spr.set_flip_x(flip);
+            spr.set_anchor(if flip { 1.0 } else { 0.0 }, 0.0);
         } else {
             let time = char.get_time();
             if time != animation.time {
@@ -423,7 +427,7 @@ impl AnimationTable {
     }
 }
 
-fn read_action(lines: &Vec<&str>, i: &mut usize) -> Option<(i32, Animation)> {
+fn read_action(lines: &Vec<&str>, i: &mut usize) -> Result<Option<(i32, Animation)>, AirError> {
     let length = lines.len();
 
     let mut name = String::new();
@@ -461,7 +465,7 @@ fn read_action(lines: &Vec<&str>, i: &mut usize) -> Option<(i32, Animation)> {
     subname = subname.to_lowercase();
 
     if name.to_lowercase() != "begin " {
-        return None;
+        return Ok(None);
     }
 
     let spi;
@@ -469,19 +473,24 @@ fn read_action(lines: &Vec<&str>, i: &mut usize) -> Option<(i32, Animation)> {
         Some(pos) => {
             spi = pos;
         }
-        None => return None,
+        None => return Ok(None),
     }
 
     if &subname[..spi] != "action" {
-        return None;
+        return Ok(None);
     }
 
     *i += 1;
 
-    return Some((
-        atoi(&subname[spi + 1..].to_string()).unwrap(),
-        read_animation(lines, i),
-    ));
+    match read_animation(lines, i) {
+        Ok(animation) => {
+            return Ok(Some((
+                atoi(&subname[spi + 1..].to_string()).unwrap(),
+                animation,
+            )))
+        }
+        Err(err) => return Err(err),
+    }
 }
 
 fn read_anim_frame(line: &String) -> Option<AnimFrame> {
@@ -662,7 +671,7 @@ fn atof(s: &str) -> f64 {
     f
 }
 
-fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Animation {
+fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Result<Animation, AirError> {
     let mut a = Animation::new();
 
     a.mask = 0;
@@ -734,8 +743,8 @@ fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Animation {
                             Ok(result) => {
                                 size = result;
                             }
-                            Err(_) => {
-                                break;
+                            Err(err) => {
+                                return Err(AirError::BadFormat(err));
                             }
                         }
 
@@ -846,7 +855,7 @@ fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Animation {
             a.nazotime = 0;
         }
     }
-    a
+    Ok(a)
 }
 
 fn atoi(string: &String) -> Result<i32, Error> {
@@ -885,15 +894,21 @@ fn atoi(string: &String) -> Result<i32, Error> {
     Ok(n as i32)
 }
 
-fn read_animation_table(air: &str) -> AnimationTable {
+fn read_animation_table(air: &str) -> Result<AnimationTable, AirError> {
     let mut i = 0;
     let mut at = AnimationTable::new();
-    let lines: Vec<&str> = air.lines().map(|line| line.trim()).collect();
-    while let Some(_) = at.read_action(&lines, &mut i) {}
-    at
+    let lines = air.lines().map(|line| line.trim()).collect();
+    while let Some(_) = at.read_action(&lines, &mut i)? {}
+    Ok(at)
 }
 
-pub fn parse_air(air: &str) -> AnimationTable {
-    let content = std::fs::read_to_string(air).expect("Cant read the file");
-    read_animation_table(&content.as_str())
+pub fn parse_air(air: &str) -> Result<AnimationTable, AirError> {
+    let content = match std::fs::read_to_string(air) {
+        Ok(content) => content,
+        Err(_) => return Err(AirError::NotFound(air.to_string())),
+    };
+    match read_animation_table(&content.as_str()) {
+        Ok(at) => return Ok(at),
+        Err(err) => return Err(err),
+    }
 }

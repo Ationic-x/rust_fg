@@ -2,6 +2,7 @@ mod player;
 mod chars;
 mod views;
 mod preloader;
+pub mod error;
 
 extern crate image;
 extern crate piston_window;
