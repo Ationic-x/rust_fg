@@ -3,9 +3,10 @@ use std::fs;
 use gfx_device_gl::Resources;
 use piston_window::{Flip, Glyphs, PistonWindow, Texture, TextureSettings};
 
-use crate::{chars, player::character::sff::decoder::Sff};
-
-
+use crate::{
+    chars,
+    player::character::sff::{decoder::Sff, error::show_error_popup},
+};
 
 pub struct Preloads {
     backgrounds: Vec<Texture<Resources>>,
@@ -63,15 +64,18 @@ impl Preloads {
                     if let Some(char_name) = name.to_str() {
                         let char = chars::get_char(char_name).unwrap();
                         let context = window.create_texture_context();
-                        roster.push(
-                            Sff::preload_sff(
-                                char_name,
-                                char.get_sff_name().to_string() + ".sff",
-                                true,
-                                context,
-                            )
-                            .unwrap(),
-                        );
+                        match Sff::preload_sff(
+                            char_name,
+                            char.get_sff_name().to_string() + ".sff",
+                            true,
+                            context,
+                        ) {
+                            Ok(sff) => roster.push(sff),
+                            Err(err) => {
+                                show_error_popup(&err);
+                                std::process::exit(0);
+                            }
+                        }
                     }
                 }
             }

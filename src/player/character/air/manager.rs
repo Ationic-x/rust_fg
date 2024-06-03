@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::{chars::Character, player::character::sff::{self, decoder::Sff}};
+use crate::{chars::Character, player::character::sff::{decoder::Sff, error::show_error_popup}};
 use gfx_device_gl::Resources;
 use piston_window::{G2dTextureContext, Texture};
 use sprite::Sprite;
@@ -352,11 +352,18 @@ impl AnimationTable {
         char: bool,
         context: G2dTextureContext,
     ) {
-        self.sff = Some(Arc::new(
-            Mutex::new(
-                sff::decoder::Sff::load_sff(char_name, filename, char, context).unwrap()
-            )
-        ));
+        match Sff::load_sff(
+            char_name,
+            filename,
+            char,
+            context,
+        ) {
+            Ok(sff) => self.sff = Some(Arc::new(Mutex::new(sff))),
+            Err(err) => {
+                show_error_popup(&err);
+                std::process::exit(0);
+            }
+        }
         self.set_animation_sff();
     }
 

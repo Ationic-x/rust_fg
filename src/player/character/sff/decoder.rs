@@ -2,8 +2,6 @@ const MAX_PAL_NO: usize = 10;
 
 use std::{
     collections::HashMap,
-    error::Error,
-    fmt::Display,
     io::{self, Cursor, Read, Seek, SeekFrom},
     path::PathBuf, rc::Rc,
 };
@@ -14,6 +12,8 @@ use flate2::read::ZlibDecoder;
 use gfx_device_gl::Resources;
 use image::RgbaImage;
 use piston_window::{G2dTextureContext, TextureSettings};
+
+use super::error::DecodeError;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SpriteId {
@@ -77,23 +77,6 @@ pub struct Sprite {
     pub pal_temp: Vec<Color>,
 }
 
-#[derive(Debug)]
-pub enum DecodeError {
-    InvalidData(io::Error),
-    InvalidSignature,
-    UnsuporttedVersion(Version),
-    // InvalidPaletteKind,
-    // PreviousPaletteNotFound,
-    // LinkedSpriteNotFound {
-    //     sprite_id: SpriteId,
-    //     linked_index: u16,
-    // },
-    // ImageCountMismatch {
-    //     expected_count: u32,
-    //     found_count: u32,
-    // },
-}
-
 impl From<Version> for (u8, u8, u8, u8) {
     fn from(v: Version) -> Self {
         (v.0, v.1, v.2, v.3)
@@ -109,39 +92,6 @@ impl From<SpriteId> for (u16, u16) {
 impl From<(u16, u16)> for SpriteId {
     fn from((group, image): (u16, u16)) -> Self {
         SpriteId { group, image }
-    }
-}
-
-impl Display for DecodeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DecodeError::InvalidData(err) => err.fmt(f),
-            DecodeError::InvalidSignature => write!(f, "invalid signature"),
-            DecodeError::UnsuporttedVersion(v) => write!(f, "unsupported version {:?}", v),
-            // DecodeError::InvalidPaletteKind => write!(f, "invalid palette kind"),
-            // DecodeError::PreviousPaletteNotFound => write!(f, "previous palette not found"),
-            // DecodeError::LinkedSpriteNotFound {
-            //     sprite_id,
-            //     linked_index,
-            // } => write!(
-            //     f,
-            //     "invalid link {} for sprite {}-{}",
-            //     linked_index, sprite_id.group, sprite_id.image
-            // ),
-            // DecodeError::ImageCountMismatch {
-            //     expected_count,
-            //     found_count,
-            // } => write!(f, "expected {expected_count} images, found {found_count}"),
-        }
-    }
-}
-
-impl Error for DecodeError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            DecodeError::InvalidData(ref err) => Some(err),
-            _ => None,
-        }
     }
 }
 
@@ -424,7 +374,7 @@ impl Sprite {
                     self.set_raw(px);
                 }
                 _ => {
-                    return Err(DecodeError::InvalidSignature);
+                    return Err(DecodeError::UknownColorDepth(self.col_depth));
                 }
             }
         } else {
@@ -460,7 +410,7 @@ impl Sprite {
 
             match format {
                 10 => {
-                    let mut iend_position = 0;
+                    let iend_position;
                     let mut idat_position = 0;
                     let mut buffer = [0; 4];
 
@@ -477,7 +427,7 @@ impl Sprite {
                                     break;
                                 }
                             }
-                            Err(_) => break,
+                            Err(err) => return Err(DecodeError::InvalidData(err)),
                         }
                     }
 
@@ -765,7 +715,7 @@ impl Sff {
         }
     }
 
-    pub fn preload_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> io::Result<Sff> {
+    pub fn preload_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, DecodeError>  {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -777,27 +727,30 @@ impl Sff {
             .join(char_name);
         let sff_path = assets.join(filename);
 
+        if !sff_path.exists() {
+            return Err(DecodeError::NotFound(sff_path));
+        }
         
         match sff.header.read(sff_path.clone()) {
-            Ok(_) => println!("nice"),
-            Err(err) => println!("Error: {}", err),
+            Ok(_) => println!("Header was read"),
+            Err(err) => return Err(err),
         };
 
         if sff.header.ver0 != 1 {
             match sff.configure_pals_v2(sff_path.clone()) {
-                Ok(_) => println!("nice"),
-                Err(err) => println!("Error: {}", err),
+                Ok(_) => println!("Configure and added all the palettes"),
+                Err(err) => return Err(err),
             };
         }
 
         match sff.configure_sprite(sff_path.clone(), char, true) {
-            Ok(_) => println!("nice"),
-            Err(err) => println!("Error: {}", err),
+            Ok(_) => println!("Readed and created all the sprites"),
+            Err(err) => return Err(err),
         };
         Ok(sff)
     }
 
-    pub fn load_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> io::Result<Sff> {
+    pub fn load_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, DecodeError> {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -809,21 +762,25 @@ impl Sff {
             .join(char_name);
         let sff_path = assets.join(filename);
 
+        if !sff_path.exists() {
+            return Err(DecodeError::NotFound(sff_path));
+        }
+
         match sff.header.read(sff_path.clone()) {
-            Ok(_) => println!("nice"),
-            Err(err) => println!("Error: {}", err),
+            Ok(_) => println!("Header was read"),
+            Err(err) => return Err(err),
         };
 
         if sff.header.ver0 != 1 {
             match sff.configure_pals_v2(sff_path.clone()) {
-                Ok(_) => println!("nice"),
-                Err(err) => println!("Error: {}", err),
+                Ok(_) => println!("Configure and added all the palettes"),
+                Err(err) => return Err(err),
             };
         }
 
         match sff.configure_sprite(sff_path.clone(), char, false) {
-            Ok(_) => println!("nice"),
-            Err(err) => println!("Error: {}", err),
+            Ok(_) => println!("Readed and created all the sprites"),
+            Err(err) => return Err(err),
         };
         Ok(sff)
     }
@@ -833,7 +790,7 @@ impl Sff {
         sff_path: PathBuf,
         char: bool,
         preload: bool,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), DecodeError> {
         let mut sprite_list: Vec<Sprite> =
             vec![Sprite::new(); self.header.number_of_sprites as usize];
         let mut prev: Option<Sprite> = None;
@@ -874,7 +831,7 @@ impl Sff {
                     )?;
                 }
                 _ => {
-                    return Err("Unsupported version".into());
+                    return Err(DecodeError::UnsupportedHeaderVersion(self.header.ver0));
                 }
             }
             if size == 0 {
@@ -905,7 +862,7 @@ impl Sff {
                         sprite_list[i].read_v2(&mut bytes, xofs as i64, size, &mut self.context)?;
                     }
                     _ => {
-                        return Err("Unsupported version".into());
+                        return Err(DecodeError::UnsupportedHeaderVersion(self.header.ver0));
                     }
                 }
                 if let Some(sprite) = sprite_list.get(i) {
@@ -945,7 +902,7 @@ impl Sff {
         }
     }
 
-    fn configure_pals_v2(&mut self, sff_path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    fn configure_pals_v2(&mut self, sff_path: PathBuf) -> Result<(), DecodeError> {
         let mut unique_pals: HashMap<[i16; 2], u16> = HashMap::new();
         let data = std::fs::read(sff_path)?;
         let mut bytes = Cursor::new(&data);
@@ -971,14 +928,6 @@ impl Sff {
             if let Some(&old) = unique_pals.get(&[gn_[0], gn_[1]]) {
                 idx = old as i32;
                 pal = self.pal_list.get(old as usize).clone();
-
-                println!(
-                    "{} duplicated palette: {} ({}/{})",
-                    gn_[0],
-                    gn_[1],
-                    i + 1,
-                    self.header.number_of_palettes
-                );
             } else if siz == 0 {
                 idx = link as i32;
                 pal = self.pal_list.get(idx as usize).clone();
@@ -1043,7 +992,7 @@ impl<'a> SffHeader {
         }
     }
 
-    fn read(&mut self, sff_path: PathBuf) -> Result<Self, DecodeError> {
+    fn read(&mut self, sff_path: PathBuf) -> Result<(), DecodeError> {
         let data = std::fs::read(sff_path)?;
 
         if &data[0..12] != b"ElecbyteSpr\0" {
@@ -1085,16 +1034,10 @@ impl<'a> SffHeader {
                 self.tofs = bytes.read_u32::<LittleEndian>()?;
             }
             _ => {
-                return Err(DecodeError::UnsuporttedVersion(version));
+                return Err(DecodeError::UnsupportedVersion(version));
             }
         }
 
-        Ok(*self)
-    }
-}
-
-impl From<io::Error> for DecodeError {
-    fn from(error: io::Error) -> Self {
-        DecodeError::InvalidData(error)
+        Ok(())
     }
 }

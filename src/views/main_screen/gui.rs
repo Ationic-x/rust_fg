@@ -14,8 +14,9 @@ const FIGHT_CONTROLS: [[&str; 11]; 3] = [
     ],
     ["L", "J", "I", "K", "R", "T", "Y", "F", "G", "H", "RCTRL"],
 ];
-const GUI_CONTROLS: [[&str; 3]; 6] = [
+const GUI_CONTROLS: [[&str; 3]; 7] = [
     ["ACCEPT", "RETURN/Z", "F"],
+    ["DEBUG", "F1", ""],
     ["CANCEL/EXIT", "ESCAPE", ""],
     ["UP", "UP", "J"],
     ["DOWN", "DOWN", "K"],
