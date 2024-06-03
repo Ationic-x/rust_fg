@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::{mpsc::{self, Receiver, Sender}, Arc, Mutex}};
+use std::sync::{mpsc::{self, Receiver, Sender}, Arc, Mutex};
 
 use gfx_device_gl::Device;
 use graphics::Context;
@@ -11,7 +11,6 @@ use super::{common::Screen, LoadingScreen, FightScreen, MainScreen, RosterScreen
 
 #[derive(PartialEq)]
 pub enum ScreenType {
-    Loading,
     Main,
     Roster,
     Fight,
@@ -26,7 +25,6 @@ pub enum Event {
 
 pub struct ScreenManager {
     current_screen: Option<Box<dyn Screen>>,
-    current_screen_type: ScreenType,
     event_sender: Sender<Event>,
     event_receiver: Receiver<Event>,
     current_characters: [String; 2],
@@ -46,7 +44,6 @@ impl ScreenManager {
 
         
         let screen = match screen_type {
-            ScreenType::Loading => Box::new(LoadingScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>,
             ScreenType::Main => Box::new(MainScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>,
             ScreenType::Roster => {
                 Box::new(RosterScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>
@@ -58,7 +55,6 @@ impl ScreenManager {
 
         Self {
             current_screen: Some(screen),
-            current_screen_type: screen_type,
             event_sender: tx,
             event_receiver: rx,
             current_characters,
@@ -79,9 +75,6 @@ impl ScreenManager {
             }
             ScreenType::Fight => {
                 Some(Box::new(FightScreen::new(window, cloned_sender, &self.current_characters, self.current_palettes, self.preloads.clone())) as Box<dyn Screen>)
-            }
-            ScreenType::Loading => {
-                Some(Box::new(LoadingScreen::new(cloned_sender, self.preloads.clone())) as Box<dyn Screen>)
             }
         };
     }

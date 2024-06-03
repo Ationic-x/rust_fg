@@ -1,10 +1,10 @@
 use gfx_device_gl::Device;
 use graphics::{line, rectangle, text, CharacterCache, Context, Transformed};
-use piston_window::{G2d, Glyphs};
+use piston_window::G2d;
 use sprite::Sprite;
-use std::{rc::Rc, sync::{Arc, Mutex, MutexGuard}};
+use std::{rc::Rc, sync::MutexGuard};
 
-use crate::{player::character::sff::decoder::Sff, preloader::{self, preloader::Preloads}};
+use crate::{player::character::sff::decoder::Sff, preloader::preloader::Preloads};
 
 const KEY_CHAR: [i16; 2] = [9000, 0];
 const KEY_PREVIEW: [i16; 2] = [9000, 1];

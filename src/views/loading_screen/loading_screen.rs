@@ -1,7 +1,6 @@
 use std::sync::{mpsc::Sender, Arc, Mutex};
 
 use graphics::clear;
-use piston_window::PistonWindow;
 
 use crate::{preloader::preloader::Preloads, views::{common::Screen, screen_manager::Event}};
 

@@ -2,7 +2,6 @@ use std::{process, sync::{mpsc::Sender, Arc, Mutex}};
 
 use graphics::{clear, image};
 use piston::Key;
-use piston_window::PistonWindow;
 
 use crate::{preloader::preloader::Preloads, views::{
     common::Screen,

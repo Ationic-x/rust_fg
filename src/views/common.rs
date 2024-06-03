@@ -2,7 +2,7 @@ use std::sync::{mpsc::Sender, Arc, Mutex};
 
 use gfx_device_gl::Device;
 use piston::Key;
-use piston_window::{Context, G2d, PistonWindow};
+use piston_window::{Context, G2d};
 
 use crate::preloader::preloader::Preloads;
 

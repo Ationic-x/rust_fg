@@ -8,7 +8,6 @@ extern crate piston_window;
 
 use piston_window::*;
 use views::screen_manager::{ScreenManager, ScreenType};
-use preloader::preloader::Preloads;
 use winit::window::WindowButtons;
 
 const FPS: u64 = 60;
