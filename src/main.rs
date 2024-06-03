@@ -1,12 +1,14 @@
 mod player;
 mod chars;
-pub mod views;
+mod views;
+mod preloader;
 
 extern crate image;
 extern crate piston_window;
 
 use piston_window::*;
 use views::screen_manager::{ScreenManager, ScreenType};
+use preloader::preloader::Preloads;
 use winit::window::WindowButtons;
 
 const FPS: u64 = 60;
@@ -41,7 +43,6 @@ fn main() {
     conf_window.set_enabled_buttons(WindowButtons::CLOSE | WindowButtons::MINIMIZE);
     window.events.set_max_fps(FPS);
     window.events.set_ups(FPS);
-
 
     let mut screen_manager = ScreenManager::new(ScreenType::Main, &mut window);
 

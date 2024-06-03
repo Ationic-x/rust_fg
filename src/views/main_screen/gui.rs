@@ -16,7 +16,7 @@ pub fn draw_options(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut G
         let color = if i == index {
             [0.9, 0.8, 0.3, 1.0]
         } else {
-            [0.0, 0.0, 0.0, 1.0]
+            [1.0, 1.0, 1.0, 1.0]
         };
 
         let text_width = glyphs.width(TEXT_SIZE, option).unwrap();
@@ -47,7 +47,7 @@ pub fn draw_title(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Gly
 
     let transform = c.transform.trans(WINDOW_WIDTH / 2.0  - text_width / 2.0, WINDOW_HEIGHT / 4.0 + text_height / 4.0).zoom(0.5);
 
-    text::Text::new_color([0.0, 0.0, 0.0, 1.0], TEXT_SIZE * 2)
+    text::Text::new_color([1.0, 1.0, 1.0, 1.0], TITLE_SIZE * 2)
         .draw(
             TITLE_GAME,
             glyphs,

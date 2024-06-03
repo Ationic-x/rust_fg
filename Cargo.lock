@@ -1351,6 +1351,7 @@ dependencies = [
  "flate2",
  "gfx_device_gl",
  "image",
+ "lazy_static",
  "nom",
  "nom_locate",
  "pcx",

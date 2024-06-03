@@ -1,39 +1,32 @@
-use std::sync::mpsc::Sender;
+use std::sync::{mpsc::Sender, Arc, Mutex};
 
 use graphics::clear;
-use piston_window::{Glyphs, PistonWindow, TextureSettings};
+use piston_window::PistonWindow;
 
-use crate::views::{common::Screen, screen_manager::Event};
+use crate::{preloader::preloader::Preloads, views::{common::Screen, screen_manager::Event}};
 
 use super::gui;
 
 pub struct LoadingScreen {
-    glyphs: Glyphs,
+    preloads: Arc<Mutex<Preloads>>,
     event_sender: Sender<Event>,
     ticks: usize,
 }
 
 impl Screen for LoadingScreen {
-    fn new(window: &mut PistonWindow, event_sender: Sender<Event>) -> Self
+    fn new(event_sender: Sender<Event>, preloads: Arc<Mutex<Preloads>>) -> Self
     where
         Self: Sized,
     {
-        let glyphs = Glyphs::new(
-            "assets\\fonts\\OpenSans-Regular.ttf",
-            window.create_texture_context(),
-            TextureSettings::new(),
-        )
-        .unwrap();
 
         Self {
-            glyphs,
+            preloads,
             event_sender,
             ticks: 0,
         }
     }
 
-    fn update(&mut self, window: Option<&mut PistonWindow>) {
-        let _ = window;
+    fn update(&mut self) {
         if self.ticks == 0 {
             self.event_sender.send(Event::ScreenReady()).unwrap();
         }
@@ -55,6 +48,6 @@ impl Screen for LoadingScreen {
         device: &mut gfx_device_gl::Device,
     ) {
         clear([0.0; 4], g);
-        gui::draw_loading(c, g, device, &mut self.glyphs);
+        gui::draw_loading(c, g, device, self.preloads.lock().unwrap().get_mut_ref_fonts().get_mut(1).unwrap(),);
     }
 }

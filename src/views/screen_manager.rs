@@ -1,9 +1,11 @@
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::{ops::Deref, sync::{mpsc::{self, Receiver, Sender}, Arc, Mutex}};
 
 use gfx_device_gl::Device;
 use graphics::Context;
 use piston::Key;
 use piston_window::{G2d, PistonWindow};
+
+use crate::preloader::preloader::Preloads;
 
 use super::{common::Screen, LoadingScreen, FightScreen, MainScreen, RosterScreen};
 
@@ -30,10 +32,13 @@ pub struct ScreenManager {
     current_characters: [String; 2],
     current_palettes: [usize; 2],
     switch_screen: ScreenType,
+    preloads: Arc<Mutex<Preloads>>
 }
 
 impl ScreenManager {
     pub fn new(screen_type: ScreenType, window: &mut PistonWindow) -> Self {
+        let preloads = Arc::new(Mutex::new(Preloads::new(window)));
+        let cloned_preloads = preloads.clone();
         let (tx, rx) = mpsc::channel();
         let cloned_sender = tx.clone();
         let current_characters = [String::new(), String::new()];
@@ -41,13 +46,13 @@ impl ScreenManager {
 
         
         let screen = match screen_type {
-            ScreenType::Loading => Box::new(LoadingScreen::new(window, cloned_sender)) as Box<dyn Screen>,
-            ScreenType::Main => Box::new(MainScreen::new(window, cloned_sender)) as Box<dyn Screen>,
+            ScreenType::Loading => Box::new(LoadingScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>,
+            ScreenType::Main => Box::new(MainScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>,
             ScreenType::Roster => {
-                Box::new(RosterScreen::new(window, cloned_sender)) as Box<dyn Screen>
+                Box::new(RosterScreen::new(cloned_sender, cloned_preloads)) as Box<dyn Screen>
             }
             ScreenType::Fight => {
-                Box::new(FightScreen::new(window, cloned_sender, &current_characters, current_palettes)) as Box<dyn Screen>
+                Box::new(FightScreen::new(window, cloned_sender, &current_characters, current_palettes, cloned_preloads)) as Box<dyn Screen>
             }
         };
 
@@ -59,6 +64,7 @@ impl ScreenManager {
             current_characters,
             current_palettes,
             switch_screen: ScreenType::Main,
+            preloads
         }
     }
 
@@ -66,31 +72,28 @@ impl ScreenManager {
         let cloned_sender = self.event_sender.clone();
         self.current_screen = match self.switch_screen {
             ScreenType::Main => {
-                Some(Box::new(MainScreen::new(window, cloned_sender)) as Box<dyn Screen>)
+                Some(Box::new(MainScreen::new(cloned_sender, self.preloads.clone())) as Box<dyn Screen>)
             }
             ScreenType::Roster => {
-                Some(Box::new(RosterScreen::new(window, cloned_sender)) as Box<dyn Screen>)
+                Some(Box::new(RosterScreen::new(cloned_sender, self.preloads.clone())) as Box<dyn Screen>)
             }
             ScreenType::Fight => {
-                Some(Box::new(FightScreen::new(window, cloned_sender, &self.current_characters, self.current_palettes)) as Box<dyn Screen>)
+                Some(Box::new(FightScreen::new(window, cloned_sender, &self.current_characters, self.current_palettes, self.preloads.clone())) as Box<dyn Screen>)
             }
             ScreenType::Loading => {
-                Some(Box::new(LoadingScreen::new(window, cloned_sender)) as Box<dyn Screen>)
+                Some(Box::new(LoadingScreen::new(cloned_sender, self.preloads.clone())) as Box<dyn Screen>)
             }
         };
     }
 
     pub fn update(&mut self, window: &mut PistonWindow) {
         if let Some(screen) = self.current_screen.as_mut() {
-            if self.current_screen_type == ScreenType::Roster {
-                screen.update(Some(window));
-            }
-            screen.update(None);
+            screen.update();
         }
         while let Ok(event) = self.event_receiver.try_recv() {
             match event {
                 Event::ChangeScreen(screen_type) => {
-                    self.current_screen = Some(Box::new(LoadingScreen::new(window, self.event_sender.clone())) as Box<dyn Screen>);
+                    self.current_screen = Some(Box::new(LoadingScreen::new(self.event_sender.clone(), self.preloads.clone())) as Box<dyn Screen>);
                     self.switch_screen = screen_type;
                 }
                 Event::SetPalettes(palettes) => {

@@ -1,16 +1,13 @@
-use std::{fs, sync::mpsc::Sender};
+use std::sync::{mpsc::Sender, Arc, Mutex};
 
-use graphics::clear;
+use graphics::{clear, image};
 use piston::Key;
-use piston_window::{Glyphs, PistonWindow, TextureSettings};
 
 use crate::{
-    chars,
-    player::character::sff::decoder::Sff,
-    views::{
+    preloader::preloader::Preloads, views::{
         common::Screen,
         screen_manager::{Event, ScreenType},
-    },
+    }
 };
 
 use super::gui;
@@ -18,7 +15,6 @@ use super::gui;
 const TICK_RESET: usize = 20;
 
 pub struct RosterScreen {
-    glyphs: Glyphs,
     p1_selected_index: usize,
     p1_selected: bool,
     p1_color: usize,
@@ -27,52 +23,21 @@ pub struct RosterScreen {
     p2_selected: bool,
     p2_index_color: usize,
     p2_color: usize,
-    roster: Vec<Sff>,
     ticks: usize,
     event_sender: Sender<Event>,
+    preloads: Arc<Mutex<Preloads>>,
 }
 
 impl Screen for RosterScreen {
-    fn new(window: &mut PistonWindow, event_sender: Sender<Event>) -> Self
+    fn new(event_sender: Sender<Event>, preloads: Arc<Mutex<Preloads>>) -> Self
     where
         Self: Sized,
     {
-        let mut roster = Vec::new();
-
-        let glyphs = Glyphs::new(
-            "assets\\fonts\\OpenSans-ExtraBold.ttf",
-            window.create_texture_context(),
-            TextureSettings::new(),
-        )
-        .unwrap();
-
-        for entry in fs::read_dir("src\\chars\\").unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_dir() {
-                if let Some(name) = path.file_name() {
-                    if let Some(char_name) = name.to_str() {
-                        let char = chars::get_char(char_name).unwrap();
-                        let context = window.create_texture_context();
-                        roster.push(
-                            Sff::preload_sff(
-                                char_name,
-                                char.get_sff_name().to_string() + ".sff",
-                                true,
-                                context,
-                            )
-                            .unwrap(),
-                        );
-                    }
-                }
-            }
-        }
 
         Self {
-            glyphs,
             p1_selected_index: 0,
             p2_selected_index: 0,
-            roster,
+            preloads,
             ticks: 0,
             p1_selected: false,
             p1_index_color: 1,
@@ -84,13 +49,13 @@ impl Screen for RosterScreen {
         }
     }
 
-    fn update(&mut self, window: Option<&mut PistonWindow>) {
-        let _ = window;
+    fn update(&mut self) {
         self.ticks += 1;
-        if self.p1_color > 0 && self.p2_color > 0 && self.ticks > 20 {
+        if self.p1_color > 0 && self.p2_color > 0 && self.ticks > TICK_RESET {
+            let preloads = self.preloads.lock().unwrap();
             let characters = [
-                self.roster[self.p1_selected_index].get_name(),
-                self.roster[self.p2_selected_index].get_name(),
+                preloads.get_ref_roster()[self.p1_selected_index].get_name(),
+                preloads.get_ref_roster()[self.p2_selected_index].get_name(),
             ];
             self.event_sender
                 .send(Event::SetCharacters(characters))
@@ -162,6 +127,8 @@ impl Screen for RosterScreen {
         device: &mut gfx_device_gl::Device,
     ) {
         clear([1.0; 4], g);
+        let mut preloads = self.preloads.lock().unwrap();
+        image(preloads.get_mut_ref_background().get(0).unwrap(), c.transform, g);
         if self.ticks / TICK_RESET % 2 == 0 {
             gui::draw_selector(c, g, self.p2_selected_index, false);
             gui::draw_selector(c, g, self.p1_selected_index, true);
@@ -169,15 +136,14 @@ impl Screen for RosterScreen {
             gui::draw_selector(c, g, self.p1_selected_index, true);
             gui::draw_selector(c, g, self.p2_selected_index, false);
         }
-        gui::draw_characters(c, g, &self.roster);
-
+        gui::draw_characters(c, g, preloads.get_ref_roster());
+        
         if self.p1_selected {
             gui::draw_preview(
                 c,
                 g,
                 device,
-                &mut self.glyphs,
-                &self.roster,
+                &mut preloads,
                 self.p1_selected_index,
                 true,
             );
@@ -185,7 +151,7 @@ impl Screen for RosterScreen {
                 c,
                 g,
                 device,
-                &mut self.glyphs,
+                &mut preloads,
                 self.p1_index_color,
                 true,
                 self.p1_color > 0,
@@ -197,8 +163,7 @@ impl Screen for RosterScreen {
                 c,
                 g,
                 device,
-                &mut self.glyphs,
-                &self.roster,
+                &mut preloads,
                 self.p2_selected_index,
                 false,
             );
@@ -206,7 +171,7 @@ impl Screen for RosterScreen {
                 c,
                 g,
                 device,
-                &mut self.glyphs,
+                &mut preloads,
                 self.p2_index_color,
                 false,
                 self.p2_color > 0,

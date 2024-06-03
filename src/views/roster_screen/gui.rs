@@ -2,9 +2,9 @@ use gfx_device_gl::Device;
 use graphics::{line, rectangle, text, CharacterCache, Context, Transformed};
 use piston_window::{G2d, Glyphs};
 use sprite::Sprite;
-use std::rc::Rc;
+use std::{rc::Rc, sync::{Arc, Mutex, MutexGuard}};
 
-use crate::player::character::sff::decoder::Sff;
+use crate::{player::character::sff::decoder::Sff, preloader::{self, preloader::Preloads}};
 
 const KEY_CHAR: [i16; 2] = [9000, 0];
 const KEY_PREVIEW: [i16; 2] = [9000, 1];
@@ -23,18 +23,19 @@ pub fn draw_color_pick(
     c: Context,
     g: &mut G2d,
     device: &mut Device,
-    glyphs: &mut Glyphs,
+    preloads: &mut MutexGuard<Preloads>,
     index: usize,
     first_player: bool,
     picked: bool,
 ) {
+    let glyphs = preloads.get_mut_ref_fonts().get_mut(0).unwrap();
     let text = format!("Color {}", index);
     let text_width = glyphs.width(COLOR_TEXT_SIZE, &text).unwrap();
     let x;
     if first_player {
-        x = PREVIEW_SIZE[0];
+        x = PREVIEW_SIZE[0] + PREVIEW_SIZE[0] / 3.0;
     } else {
-        x = WINDOW_SIZE[0] - PREVIEW_SIZE[0] - text_width;
+        x = WINDOW_SIZE[0] - PREVIEW_SIZE[0] - text_width - PREVIEW_SIZE[0] / 3.0;
     }
 
     let transform = c
@@ -45,7 +46,7 @@ pub fn draw_color_pick(
     if picked {
         color = [0.9, 0.3, 0.5, 1.0]
     } else {
-        color = [0.0, 0.0, 0.0, 1.0]
+        color = [1.0, 1.0, 1.0, 1.0]
     }
 
     text::Text::new_color(color, COLOR_TEXT_SIZE * 2)
@@ -59,11 +60,11 @@ pub fn draw_preview(
     c: Context,
     g: &mut G2d,
     device: &mut Device,
-    glyphs: &mut Glyphs,
-    roster: &Vec<Sff>,
+    preloads: &mut MutexGuard<Preloads>,
     index: usize,
     first_player: bool,
 ) {
+    let roster = preloads.get_ref_roster();
     if roster.is_empty() {
         return;
     }
@@ -105,6 +106,8 @@ pub fn draw_preview(
     rectangle([1.0, 1.0, 1.0, 0.5], background_rect, c.transform, g);
 
     let text = roster[index].get_name();
+    
+    let glyphs = preloads.get_mut_ref_fonts().get_mut(0).unwrap();
     let transform = c
         .transform
         .trans(x, WINDOW_SIZE[1] - PREVIEW_SIZE[1] / 20.0).zoom(0.5);

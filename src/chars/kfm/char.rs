@@ -353,6 +353,9 @@ fn default_end_action(char: &mut CharData) {
 }
 
 pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
+    if target.get_state() == &State::L {
+        return;
+    }
     let target_state_no = target.get_state_no();
     if (target_state_no == 1300 || target_state_no == 1320 || target_state_no == 1340)
         && target.get_anim_elem() < 2
@@ -368,9 +371,6 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
     }
     let target_state = target.get_state();
     let target_direction = target.get_direction();
-    if target_state == &State::L {
-        return;
-    }
     if char.attack != State::C
         && (target_direction == 4
             || target_direction == 7

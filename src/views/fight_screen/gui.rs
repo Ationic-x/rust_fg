@@ -88,6 +88,60 @@ pub fn draw_health_bar(c: Context, g: &mut G2d, life: f64, is_player_one: bool) 
     );
 }
 
+pub fn draw_countdown(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, timer: u32) {
+    let progress = timer as f64 / 3.0;
+    let end_angle = 2.0 * PI * progress;
+
+    let center = [TIMER_CENTER_X, 255.0];
+    let radius = TIMER_RADIUS * 2.0;
+
+    ellipse(
+        [0.5, 0.5, 0.5, 1.0],
+        [
+            center[0] - radius,
+            center[1] - radius,
+            radius * 2.0,
+            radius * 2.0,
+        ],
+        c.transform,
+        g,
+    );
+
+    let mut points = vec![center];
+    for i in 0..=100 {
+        let angle = (i as f64 / 100.0) * end_angle + PI;
+        points.push([
+            center[0] + radius * angle.sin(),
+            center[1] + radius * angle.cos(),
+        ]);
+    }
+
+    polygon(
+        [0.3, 0.5, 0.8, 1.0],
+        &points,
+        c.transform,
+        g,
+    );
+
+    let text = format!("{:.0}", timer);
+    let text_width = glyphs.width(TEXT_SIZE, &text).unwrap();
+    let text_height = TEXT_SIZE as f64;
+
+    let transform = c.transform.trans(center[0] - text_width, center[1] + text_height / 2.0);
+
+    text::Text::new_color([1.0, 1.0, 1.0, 1.0], TEXT_SIZE * 2)
+        .draw(
+            &text,
+            glyphs,
+            &c.draw_state,
+            transform,
+            g,
+        )
+        .unwrap();
+
+    glyphs.factory.encoder.flush(device);
+}
+
 pub fn draw_timer(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, timer: u32) {
     let progress = timer as f64 / 100.0;
     let end_angle = 2.0 * PI * progress;
