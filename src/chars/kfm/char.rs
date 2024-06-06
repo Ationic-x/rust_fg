@@ -386,7 +386,7 @@ fn default_end_action(char: &mut CharData) {
     trigger(char);
 }
 
-/// Maneja la situación cuando un personaje golpea a otro, actualizando los datos de ambos. </br>
+/// Maneja la situación cuando un personaje golpea a otro, actualizando los datos de ambos. <br>
 /// Las condiciones y resultados:
 /// - El objetivo está en el suelo -> nada.
 /// - El objetivo hizo un "parry" -> nada.
