@@ -1250,7 +1250,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
     }
 }
 
-/// En base al estado del personaje se actualiza sus datos acorde al mismo. </br>
+/// En base al estado del personaje se actualiza sus datos acorde al mismo. <br>
 /// Comportamiento genérico:
 /// - Primero comprueba si el estado es nuevo y le asigna un valor inicial a ciertos datos (animación, control, estado...).
 /// - Seguidamente según en que punto del estado está (definido normalmente por la posición y los frames), se actualizan los datos.

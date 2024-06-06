@@ -340,7 +340,7 @@ pub trait Character {
     /// * `fall` - Valor booleano que indica si el personaje está en estado de caída o no.
     fn set_fall(&mut self, fall: bool);
 
-    /// Establece el estado actual del personaje.</br>
+    /// Establece el estado actual del personaje.<br>
     /// Puede ser de pie, en el aire, tirado y agachado.
     ///
     /// # Argumentos

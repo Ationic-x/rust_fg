@@ -426,7 +426,7 @@ impl Character for CharData {
         self.hit = hit_no;
     }
 
-    /// Actualiza las posición del personaje. </br>
+    /// Actualiza las posición del personaje. <br>
     /// En base a la posición actual y estado, se le aplica un coeficiente de fricción con el suelo
     /// a la vez que se detecta cuando choca contra una pared o cuanto tiempo está en el aire.
     fn update_pos(&mut self) {
