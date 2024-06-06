@@ -1,3 +1,4 @@
+/// Atributos propios del personaje KFM
 pub mod constants {
     // [Filenames]
     pub const SFF: &str = "kfm";

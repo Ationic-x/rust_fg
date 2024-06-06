@@ -30,6 +30,14 @@ const WINDOW_SIZE: [f64; 2] = [512.0; 2];
 const PADDING: f64 = 17.0;
 const OPTION_MARGIN_TOP: f64 = 200.0;
 
+/// Dibuja la información en pantalla, con opciones y controles.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `index`: El índice de la opción seleccionada.
 pub fn draw_info(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, index: usize) {
     let mut cummulative_width = 0.0;
     rectangle(
@@ -113,6 +121,14 @@ pub fn draw_info(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyp
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja las opciones de menú.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `index`: El índice de la opción seleccionada.
 pub fn draw_options(
     c: Context,
     g: &mut G2d,
@@ -146,6 +162,13 @@ pub fn draw_options(
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja el título del juego.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
 pub fn draw_title(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs) {
     let text_width = glyphs.width(TITLE_SIZE, TITLE_GAME).unwrap();
     let text_height = TITLE_SIZE as f64;

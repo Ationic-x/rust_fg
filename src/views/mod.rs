@@ -1,4 +1,4 @@
-pub mod common;
+pub mod screen;
 pub mod fight_screen;
 pub mod main_screen;
 pub mod roster_screen;

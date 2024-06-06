@@ -1,15 +1,22 @@
-use std::{process, sync::{mpsc::Sender, Arc, Mutex}};
+use std::{
+    process,
+    sync::{mpsc::Sender, Arc, Mutex},
+};
 
 use graphics::{clear, image};
 use piston::Key;
 
-use crate::{preloader::preloader::Preloads, views::{
-    common::Screen,
-    screen_manager::{Event, ScreenType},
-}};
+use crate::{
+    preloader::preloader::Preloads,
+    views::{
+        screen::Screen,
+        screen_manager::{Event, ScreenType},
+    },
+};
 
 use super::gui;
 
+/// Representa la pantalla principal del juego.
 pub struct MainScreen {
     preloads: Arc<Mutex<Preloads>>,
     selected_index: usize,
@@ -19,11 +26,20 @@ pub struct MainScreen {
 }
 
 impl Screen for MainScreen {
+    /// Crea una nueva instancia de `MainScreen`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `event_sender` - El canal de eventos para comunicarse con el administrador de pantallas.
+    /// * `preloads` - Los recursos precargados para el juego.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `MainScreen`.
     fn new(event_sender: Sender<Event>, preloads: Arc<Mutex<Preloads>>) -> Self
     where
         Self: Sized,
     {
-
         Self {
             preloads,
             selected_index: 0,
@@ -33,13 +49,18 @@ impl Screen for MainScreen {
         }
     }
 
-    fn update(&mut self) {
-    }
+    /// Actualiza el estado de la pantalla principal.
+    fn update(&mut self) {}
 
+    /// Maneja el evento de presionar una tecla en la pantalla principal.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha presionado.
     fn on_press(&mut self, key: piston_window::prelude::Key) {
         match key {
             Key::Left | Key::J => {
-                if self.info_popup && self.info_index > 0{
+                if self.info_popup && self.info_index > 0 {
                     self.info_index -= 1;
                 }
             }
@@ -84,10 +105,22 @@ impl Screen for MainScreen {
         }
     }
 
+    /// Maneja el evento de soltar una tecla en la pantalla principal.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha soltado.
     fn on_release(&mut self, key: piston_window::prelude::Key) {
         let _ = key;
     }
 
+    /// Dibuja el contenido de la pantalla principal.
+    ///
+    /// # Argumentos
+    ///
+    /// * `c` - El contexto de dibujo.
+    /// * `g` - El contexto de gráficos.
+    /// * `device` - El dispositivo de dibujo.
     fn draw(
         &mut self,
         c: graphics::Context,
@@ -96,7 +129,11 @@ impl Screen for MainScreen {
     ) {
         clear([1.0; 4], g);
         let mut preload = self.preloads.lock().unwrap();
-        image(preload.get_mut_ref_background().get(0).unwrap(), c.transform, g);
+        image(
+            preload.get_mut_ref_background().get(0).unwrap(),
+            c.transform,
+            g,
+        );
         let glyphs = preload.get_mut_ref_fonts().get_mut(0).unwrap();
         gui::draw_title(c, g, device, glyphs);
         gui::draw_options(c, g, device, glyphs, self.selected_index);

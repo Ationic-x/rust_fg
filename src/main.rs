@@ -11,8 +11,10 @@ use piston_window::*;
 use views::screen_manager::{ScreenManager, ScreenType};
 use winit::window::WindowButtons;
 
+/// Máximo de frames por segundo (FPS) para la ventana del juego.
 const FPS: u64 = 60;
 
+/// Enumaración de teclas de comandos que se pueden pulsar
 #[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum CK {
     DB,
@@ -32,6 +34,7 @@ pub enum CK {
     Start,
 }
 
+/// Punto de entrada de la aplicación.
 fn main() {
     let mut window: PistonWindow = WindowSettings::new("Rust FG", [512; 2])
         .resizable(false)

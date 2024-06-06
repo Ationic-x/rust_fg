@@ -4,16 +4,18 @@ use graphics::{clear, image};
 use piston::Key;
 
 use crate::{
-    preloader::preloader::Preloads, views::{
-        common::Screen,
+    preloader::preloader::Preloads,
+    views::{
+        screen::Screen,
         screen_manager::{Event, ScreenType},
-    }
+    },
 };
 
 use super::gui;
 
 const TICK_RESET: usize = 20;
 
+/// Representa la pantalla de selección de personajes.
 pub struct RosterScreen {
     p1_selected_index: usize,
     p1_selected: bool,
@@ -29,11 +31,20 @@ pub struct RosterScreen {
 }
 
 impl Screen for RosterScreen {
+    /// Crea una nueva instancia de `RosterScreen`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `event_sender` - El canal de eventos para comunicarse con el administrador de pantallas.
+    /// * `preloads` - Los recursos precargados para el juego.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `RosterScreen`.
     fn new(event_sender: Sender<Event>, preloads: Arc<Mutex<Preloads>>) -> Self
     where
         Self: Sized,
     {
-
         Self {
             p1_selected_index: 0,
             p2_selected_index: 0,
@@ -49,6 +60,7 @@ impl Screen for RosterScreen {
         }
     }
 
+    /// Actualiza el estado de la pantalla de selección de personajes.
     fn update(&mut self) {
         self.ticks += 1;
         if self.p1_color > 0 && self.p2_color > 0 && self.ticks > TICK_RESET {
@@ -69,6 +81,11 @@ impl Screen for RosterScreen {
         }
     }
 
+    /// Maneja el evento de presionar una tecla en la pantalla de selección de personajes.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha presionado.
     fn on_press(&mut self, key: piston_window::prelude::Key) {
         match key {
             Key::Up | Key::Down | Key::Left | Key::Right | Key::Z => {
@@ -116,10 +133,22 @@ impl Screen for RosterScreen {
         }
     }
 
+    /// Maneja el evento de soltar una tecla en la pantalla de selección de personajes.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha soltado.
     fn on_release(&mut self, key: piston_window::prelude::Key) {
         let _ = key;
     }
 
+    /// Dibuja el contenido de la pantalla de selección de personajes.
+    ///
+    /// # Argumentos
+    ///
+    /// * `c` - El contexto de dibujo.
+    /// * `g` - El contexto de gráficos.
+    /// * `device` - El dispositivo de dibujo.
     fn draw(
         &mut self,
         c: graphics::Context,
@@ -128,7 +157,11 @@ impl Screen for RosterScreen {
     ) {
         clear([1.0; 4], g);
         let mut preloads = self.preloads.lock().unwrap();
-        image(preloads.get_mut_ref_background().get(0).unwrap(), c.transform, g);
+        image(
+            preloads.get_mut_ref_background().get(0).unwrap(),
+            c.transform,
+            g,
+        );
         if self.ticks / TICK_RESET % 2 == 0 {
             gui::draw_selector(c, g, self.p2_selected_index, false);
             gui::draw_selector(c, g, self.p1_selected_index, true);
@@ -137,16 +170,9 @@ impl Screen for RosterScreen {
             gui::draw_selector(c, g, self.p2_selected_index, false);
         }
         gui::draw_characters(c, g, preloads.get_ref_roster());
-        
+
         if self.p1_selected {
-            gui::draw_preview(
-                c,
-                g,
-                device,
-                &mut preloads,
-                self.p1_selected_index,
-                true,
-            );
+            gui::draw_preview(c, g, device, &mut preloads, self.p1_selected_index, true);
             gui::draw_color_pick(
                 c,
                 g,
@@ -159,14 +185,7 @@ impl Screen for RosterScreen {
         }
 
         if self.p2_selected {
-            gui::draw_preview(
-                c,
-                g,
-                device,
-                &mut preloads,
-                self.p2_selected_index,
-                false,
-            );
+            gui::draw_preview(c, g, device, &mut preloads, self.p2_selected_index, false);
             gui::draw_color_pick(
                 c,
                 g,

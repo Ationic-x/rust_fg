@@ -3,135 +3,138 @@ use crate::{player::character::cmd, CK};
 use cmd::manager::CommandNode;
 use std::mem;
 
-/// Represents different attack commands and their associated values.
+/// Representa diferentes comandos de ataque y sus valores asociados.
 ///
-/// This enum defines the various attack commands that can be executed in the game,
-/// along with their corresponding values. These commands include LP (Light Punch),
-/// MP (Medium Punch), HP (Heavy Punch), LK (Light Kick), MK (Medium Kick), and HK (Heavy Kick).
+/// Esta enumeración define los diversos comandos de ataque que pueden ejecutarse en el juego,
+/// junto con sus valores correspondientes. Estos comandos incluyen LP (Puño Ligero),
+/// MP (Puño Medio), HP (Puño Pesado), LK (Patada Ligera), MK (Patada Mediana) y HK (Patada Pesada).
 #[derive(Copy, Clone, Debug)]
 enum Action {
-    /// Ligth Punch Action
+    /// Acción de Puño Ligero
     LP = 1 << 4,
-    /// Medium Punch Action
+    /// Acción de Puño Medio
     MP = 1 << 5,
-    /// Heavy Punch Action
+    /// Acción de Puño Pesado
     HP = 1 << 6,
-    /// Ligth Kick Action
+    /// Acción de Patada Ligera
     LK = 1 << 7,
-    /// Medium Kick Action
+    /// Acción de Patada Media
     MK = 1 << 8,
-    /// Heavy Kick Action
+    /// Acción de Patada Pesada
     HK = 1 << 9,
+    /// Acción de Provocar o Inicio
     Start = 1 << 10,
 }
 
-/// Represents directional movement in 2D space.
+/// Representa el movimiento direccional en el espacio 2D.
 ///
-/// This enum defines the possible directional movements in 2D space,
-/// including forward, backward, up, down, and various diagonal combinations.
+/// Esta enumeración define los posibles movimientos direccionales en el espacio 2D,
+/// incluyendo adelante, atrás, arriba, abajo y varias combinaciones diagonales.
 #[derive(Copy, Clone, Debug)]
 enum Direction {
-    /// Forward direction.
+    /// Dirección hacia adelante.
     F = 5,
-    /// Up direction.
+    /// Dirección hacia arriba.
     U = 2,
-    /// Backward direction.
+    /// Dirección hacia atrás.
     B = 6,
-    /// Down direction.
+    /// Dirección hacia abajo.
     D = 9,
-    /// Up-Backward diagonal direction.
+    /// Dirección diagonal arriba-atrás.
     UB = 8,
-    /// Up-Forward diagonal direction.
+    /// Dirección diagonal arriba-adelante.
     UF = 7,
-    /// Down-Forward diagonal direction.
+    /// Dirección diagonal abajo-adelante.
     DF = 14,
-    /// Down-Backward diagonal direction.
+    /// Dirección diagonal abajo-atrás.
     DB = 15,
 }
 
-/// Stores the input state of a player.
+/// Almacena el estado de entrada de un jugador.
 ///
-/// This struct holds the current input state of a player, indicating whether
-/// specific keys or directional inputs are being pressed.
+/// Esta estructura contiene el estado de entrada actual de un jugador, indicando si
+/// se están presionando teclas específicas o entradas direccionales.
 pub struct PlayerInput {
-    /// Light Punch key state
+    /// Estado de la tecla Puño Ligero
     pub lp: bool,
-    /// Medium Punch key state
+    /// Estado de la tecla Puño Medio
     pub mp: bool,
-    /// Heavy Punch key state
+    /// Estado de la tecla Puño Pesado
     pub hp: bool,
-    /// Light Kick key state
+    /// Estado de la tecla Patada Ligera
     pub lk: bool,
-    /// Medium Kick key state
+    /// Estado de la tecla Patada Mediana
     pub mk: bool,
-    /// Heavy Kick key state
+    /// Estado de la tecla Patada Pesada
     pub hk: bool,
-    /// Forward key state
+    /// Estado de la tecla Adelante
     pub f: bool,
-    /// Up key state
+    /// Estado de la tecla Arriba
     pub u: bool,
-    /// Backward key state
+    /// Estado de la tecla Atrás
     pub b: bool,
-    /// Down key state
+    /// Estado de la tecla Abajo
     pub d: bool,
-    /// Up-Backward key state
+    /// Estado de la tecla Arriba-Atrás
     pub ub: bool,
-    /// Up-Forward key state
+    /// Estado de la tecla Arriba-Adelante
     pub uf: bool,
-    /// Down-Forward key state
+    /// Estado de la tecla Abajo-Adelante
     pub df: bool,
-    /// Down-Backward key state
+    /// Estado de la tecla Abajo-Atrás
     pub db: bool,
+    /// Estado de la tecla de Inicio o Provocar
     pub start: bool,
 }
 
-/// Represents an input key along with its buffer time.
+/// Representa una tecla de entrada junto con su tiempo de almacenamiento en búfer.
 ///
-/// This struct holds an input key along with the time it has been buffered.
-/// It is used to track the duration for which a particular key has been held.
+/// Esta estructura contiene una tecla de entrada junto con el tiempo que ha estado almacenada en búfer.
+/// Se utiliza para rastrear la duración durante la cual se ha mantenido presionada una tecla particular.
 #[derive(Debug, Clone, Copy)]
 pub struct InputKey {
-    /// Command key associated with the input
+    /// Tecla de comando asociada con la entrada
     cmd_key: CK,
-    /// Time for which the input has been buffered
+    /// Tiempo por el cual la entrada ha estado almacenada en búfer
     buff_time: u128,
 }
 
-/// Represents a sequence of input commands.
+/// Representa una secuencia de comandos de entrada.
 ///
-/// This struct represents a sequence of input commands that have been buffered,
-/// forming a command input. It contains a list of input keys, an input window
-/// indicating the maximum duration for which the input is valid, and a flag to
-/// track whether the input has been processed.
+/// Esta estructura representa una secuencia de comandos de entrada que se han almacenado en búfer,
+/// formando una entrada de comando. Contiene una lista de teclas de entrada, una ventana de entrada
+/// que indica la duración máxima durante la cual la entrada es válida, y una bandera para
+/// rastrear si la entrada ha sido procesada.
 #[derive(Clone, Debug)]
 pub struct CommandInput {
-    /// List of input keys in the sequence
+    /// Lista de teclas de entrada en la secuencia
     keys: Vec<InputKey>,
-    /// Maximum duration for which the input is valid
+    /// Duración máxima durante la cual la entrada es válida
     input_window: u16,
-    // Flag indicating whether the input has been processed
+    // Bandera que indica si la entrada ha sido procesada
     walked: bool,
+    /// Indica si se ha encontrado la entrada
     found: bool,
 }
 
-/// Manages player input and command buffering.
+/// Gestiona la entrada del jugador y el almacenamiento de comandos.
 ///
-/// This struct handles player input and manages the buffering of input commands.
-/// It maintains the current input state of the player and stores a buffer of
-/// command inputs for processing.
+/// Esta estructura maneja la entrada del jugador y administra el almacenamiento de comandos de entrada.
+/// Mantiene el estado de entrada actual del jugador y almacena un búfer de
+/// comandos de entrada para su procesamiento.
 pub struct InputManager {
-    /// Player input state
+    /// Estado de entrada del jugador
     pub player_input: PlayerInput,
-    /// Buffer for storing command inputs
+    /// Búfer para almacenar los comandos de entrada
     input_buffer: Vec<CommandInput>,
 }
 
 impl PlayerInput {
-    /// Creates a new `PlayerInput` instance with all keys initially released.
+    /// Crea una nueva instancia de `PlayerInput` con todas las teclas inicialmente liberadas.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    ///  A new `PlayerInput` instance with all key states set to `false`.
+    ///  Una nueva instancia de `PlayerInput` con todos los estados de tecla establecidos en `false`.
     fn new() -> Self {
         PlayerInput {
             lp: false,
@@ -152,6 +155,9 @@ impl PlayerInput {
         }
     }
 
+    /// Limpia todas las acciones del jugador.
+    ///
+    /// Restablece todos los estados de teclas de acción a `false`.
     fn clear_action(&mut self) {
         self.lp = false;
         self.mp = false;
@@ -161,19 +167,20 @@ impl PlayerInput {
         self.hk = false;
         self.start = false;
     }
-    /// Sets the state of a specified key.
+
+    /// Establece el estado de una tecla especificada.
     ///
-    /// Sets the state of the given key to the specified boolean value.
-    /// Returns the previous state of the key.
+    /// Establece el estado de la tecla especificada al valor booleano especificado.
+    /// Devuelve el estado anterior de la tecla.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `key` - A reference to the key to set the state for.
-    /// * `state` - The boolean value indicating whether the key is pressed (`true`) or released (`false`).
+    /// * `symbol` - Una referencia a la tecla para establecer el estado.
+    /// * `state` - El valor booleano que indica si la tecla está presionada (`true`) o liberada (`false`).
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// The previous state of the key before it was set.
+    /// El estado anterior de la tecla antes de que se estableciera.
     pub fn set_state(&mut self, symbol: &str, state: bool) -> bool {
         let result;
         match symbol {
@@ -226,17 +233,17 @@ impl PlayerInput {
         result
     }
 
-    /// Retrieves the state of a specified command key.
+    /// Recupera el estado de una tecla de comando especificada.
     ///
-    /// Returns the current state of the specified command key.
+    /// Devuelve el estado actual de la tecla de comando especificada.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `cmd_key` - A reference to the command key whose state is to be retrieved.
+    /// * `cmd_key` - Una referencia a la tecla de comando cuyo estado se va a recuperar.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// The current state of the specified command key.
+    /// El estado actual de la tecla de comando especificada.
     fn get_state(&self, cmd_key: &CK) -> bool {
         match cmd_key {
             CK::DB => self.db,
@@ -257,14 +264,14 @@ impl PlayerInput {
         }
     }
 
-    /// Converts the player input to a bit representation.
+    /// Convierte la entrada del jugador a una representación de bits.
     ///
-    /// Converts the current state of the player input into a 16-bit representation
-    /// where each bit corresponds to the state of a specific key or directional input.
+    /// Convierte el estado actual de la entrada del jugador en una representación de 16 bits
+    /// donde cada bit corresponde al estado de una tecla específica o una entrada direccional.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// The current state of the player input in 16-bit
+    /// El estado actual de la entrada del jugador en 16 bits.
     fn to_bits(&self) -> u16 {
         let mut result = 0;
         if self.f {
@@ -317,19 +324,17 @@ impl PlayerInput {
 }
 
 impl InputKey {
-    /// Creates a new `InputKey` instance with the specified command key.
+    /// Crea una nueva instancia de `InputKey` con la tecla de comando especificada.
     ///
-    /// Returns a new `InputKey` instance initialized with the provided command key
-    /// and a buffer time of zero.
+    /// Devuelve una nueva instancia de `InputKey` inicializada con la tecla de comando proporcionada
+    /// y un tiempo de búfer de cero.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `key` - The command key associated with the input.
+    /// * `key` - La tecla de comando asociada con la entrada.
     ///
-    /// # Returns
-    /// A new `InputKey` instance:
-    /// * `cmd_key` initialized with `Key` value.
-    /// * `buff_time` initialized to zero.
+    /// # Retorna
+    /// Una nueva instancia de `InputKey` por defecto usando la tecla designada.
     fn new(key: CK) -> Self {
         Self {
             cmd_key: key,
@@ -337,31 +342,28 @@ impl InputKey {
         }
     }
 
-    /// Updates the buffer time of the input key.
+    /// Actualiza el tiempo de búfer de la tecla de entrada.
     ///
-    /// Increments the buffer time of the input key by one unit.
+    /// Incrementa el tiempo de búfer de la tecla de entrada en una unidad.
     fn update(&mut self) {
         self.buff_time += 1;
     }
 
-    /// Retrieves a reference to the command key associated with the input.
+    /// Recupera una referencia a la tecla de comando asociada con la entrada.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// A reference to the command key associated with the input.
+    /// Una referencia a la tecla de comando asociada con la entrada.
     pub fn get_cmd_key_ref(&self) -> &CK {
         &self.cmd_key
     }
 }
 
 impl CommandInput {
-    /// Creates a new `CommandInput` instance.
+    /// Crea una nueva instancia de `CommandInput`.
     ///
-    /// # Returns
-    /// A new `CommandInput` instance:
-    /// * `keys` initialize an empty vector
-    /// * `input_window` initialized to zero
-    /// * `walked` flag initialized to `false`.
+    /// # Retorna
+    /// Una nueva instancia de `CommandInput` inicalizada por defecto
     fn new() -> Self {
         Self {
             keys: Vec::new(),
@@ -371,35 +373,37 @@ impl CommandInput {
         }
     }
 
-    /// Retrieves a reference to the input window duration.
+    /// Recupera una referencia a la duración de la ventana de entrada.
     ///
-    /// # Returns
-    /// A reference to the input window duration, indicating the maximum
-    /// duration for which the input is valid.
+    /// # Retorna
+    /// Una referencia a la duración de la ventana de entrada, que indica la duración máxima
+    /// durante la cual la entrada es válida.
     pub fn get_input_window_ref(&self) -> &u16 {
         &self.input_window
     }
 
-    /// Retrieves a reference to the list of input keys.
+    /// Recupera una referencia a la lista de teclas de entrada.
     ///
-    /// # Returns
-    /// A reference to the list of input `keys` stored in the `CommandInput` instance.
+    /// # Retorna
+    /// Una referencia a la lista de `keys` de entrada almacenadas en la instancia de `CommandInput`.
     pub fn get_keys_ref(&self) -> &Vec<InputKey> {
         &self.keys
     }
 
+    /// Establece el estado de `found`.
+    ///
+    /// # Argumentos
+    /// * `bool` - El nuevo estado de `found`.
     pub fn set_found(&mut self, bool: bool) {
         self.found = bool;
     }
 }
 
 impl InputManager {
-    /// Creates a new `InputManager` instance.
+    /// Crea una nueva instancia de `InputManager`.
     ///
-    /// # Returns
-    /// A new `InputManager` instance:
-    /// * `player_input` initialized to all keys released (`false`)
-    /// * `input_buffer` initialize an empty vector.
+    /// # Retorna
+    /// Una nueva instancia de `InputManager` inicializada por defecto.
     pub fn new() -> Self {
         Self {
             player_input: PlayerInput::new(),
@@ -407,10 +411,10 @@ impl InputManager {
         }
     }
 
-    /// Updates the hold duration of input keys in the input buffer.
+    /// Actualiza la duración de retención de las teclas de entrada en el búfer de entrada.
     ///
-    /// Iterates through each command input in the input buffer and increments
-    /// the hold duration of any input keys that are currently held down.
+    /// Itera a través de cada comando de entrada en el búfer de entrada e incrementa
+    /// la duración de retención de las teclas de entrada que actualmente están presionadas.
     pub fn update_hold_key(&mut self) {
         for inputs in &mut self.input_buffer {
             for key in &mut inputs.keys {
@@ -420,6 +424,10 @@ impl InputManager {
             }
         }
     }
+
+    /// Voltea la dirección de entrada del jugador.
+    ///
+    /// Invierte la dirección de la entrada del jugador intercambiando los comandos de izquierda y derecha.
 
     pub fn flip(&mut self) {
         for inputs in &mut self.input_buffer {
@@ -437,15 +445,19 @@ impl InputManager {
         self.player_input.f = b;
     }
 
-    /// Traverses the input buffer and checks for valid input sequences.
+    /// Procesa el búfer de entrada en busca de secuencias de comandos válidas.
     ///
-    /// Walks through the input buffer, searching for valid input sequences
-    /// based on the provided command node tree. If a valid sequence is found,
-    /// the corresponding action is executed.
+    /// Recorre el búfer de entrada en busca de secuencias de comandos válidas
+    /// basadas en el árbol de nodos de comando proporcionado. Si se encuentra una
+    /// secuencia válida, se ejecuta la acción correspondiente.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `tree` - A reference to the command node tree used to search for valid input sequences.
+    /// * `tree` - Una referencia al árbol de nodos de comando utilizado para buscar secuencias de comandos válidas.
+    ///
+    /// # Retorna
+    ///
+    /// El nombre de la acción ejecutada si se encuentra una secuencia válida, de lo contrario, una cadena vacía.
     pub fn walk_input_buffer(&mut self, tree: &CommandNode) -> String {
         let input_buffer = &mut self.input_buffer;
         for pos in 0..input_buffer.len() {
@@ -468,6 +480,22 @@ impl InputManager {
         return "".to_string();
     }
 
+    /// Obtiene la dirección activa según la entrada del jugador.
+    ///
+    /// Determina la dirección activa basada en la entrada del jugador y el historial de entrada.
+    ///
+    /// # Retorna
+    ///
+    /// Un número entero que representa la dirección activa:
+    /// * 1 - Abajo-Atrás (DB)
+    /// * 2 - Abajo (D)
+    /// * 3 - Abajo-Adelante (DF)
+    /// * 4 - Atrás (B)
+    /// * 5 - Neutro
+    /// * 6 - Adelante (F)
+    /// * 7 - Arriba-Atrás (UB)
+    /// * 8 - Arriba (U)
+    /// * 9 - Arriba-Adelante (UF)
     pub fn get_active_direction(&self) -> u8 {
         let player = &self.player_input;
         if self.input_buffer.len() > 1
@@ -532,21 +560,24 @@ impl InputManager {
         5
     }
 
+    /// Limpia el estado de entrada del jugador y el búfer de entrada.
+    ///
+    /// Restablece todas las teclas de acción del jugador y vacía el búfer de entrada.
     pub fn clear(&mut self) {
         self.player_input.clear_action();
         self.input_buffer.clear();
     }
 
-    /// Handles the input from the player and updates the input buffer accordingly.
+    /// Maneja la entrada del jugador y actualiza el búfer de entrada en consecuencia.
     ///
-    /// Processes the player's input, converts it into command inputs, and updates
-    /// the input buffer with the new input. Optionally, replaces the last input in
-    /// the buffer if the buffer exceeds its maximum size.
+    /// Procesa la entrada del jugador, la convierte en comandos de entrada, y actualiza
+    /// el búfer de entrada con la nueva entrada. Opcionalmente, reemplaza la última entrada en
+    /// el búfer si el búfer excede su tamaño máximo.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `ticks` - A mutable reference to the tick counter representing the current game time.
-    /// * `replace` - A boolean indicating whether to replace the last input in the buffer if necessary.
+    /// * `ticks` - Una referencia mutable al contador de ticks que representa el tiempo actual del juego.
+    /// * `replace` - Un booleano que indica si reemplazar la última entrada en el búfer si es necesario.
     pub fn handle_key_input(&mut self, ticks: &mut u16, replace: bool) {
         let input_buffer = &mut self.input_buffer;
         let player_input = self.player_input.to_bits();

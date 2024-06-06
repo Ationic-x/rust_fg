@@ -9,6 +9,7 @@ use super::{character::{air::manager::Clsn, character::Character}, input::manage
 
 const PAUSE_DURATION: i32 = 3;
 
+/// Estructura que representa el jugador en el juego.
 pub struct Player {
     first_player: bool,
     pub input_manager: InputManager,
@@ -18,6 +19,7 @@ pub struct Player {
     replace_timer: i32,
 }
 
+/// Estructura que represental el mapeo de teclas para el jugador.
 pub struct KeyMap {
     lp: Key,
     mp: Key,
@@ -83,6 +85,15 @@ impl KeyMap {
 }
 
 impl Player {
+     /// Crea una nueva instancia de `Player`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `first_player` - Un booleano que indica si el jugador es el primer jugador o no.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `Player`.
     pub fn new(first_player: bool) -> Self {
         Self {
             first_player,
@@ -94,30 +105,66 @@ impl Player {
         }
     }
 
+    /// Indica si el jugador es el primer jugador.
+    ///
+    /// # Retorna
+    ///
+    /// `true` si el jugador es el primer jugador, de lo contrario, `false`.
     pub fn is_first_player(&self) -> bool {
         self.first_player
     }
 
+    /// Obtiene la vida del jugador.
+    ///
+    /// # Retorna
+    ///
+    /// La vida del jugador.
     pub fn get_life(&self) -> i32 {
         self.character.as_ref().unwrap().get_life()
     }
 
+    /// Establece si el jugador ganó.
+    ///
+    /// # Argumentos
+    ///
+    /// * `win` - Un booleano que indica si el jugador ganó o no.
     pub fn set_win(&mut self, win: bool) {
         self.character.as_mut().unwrap().set_win(win);
     }
 
+    /// Establece si el jugador perdió.
+    ///
+    /// # Argumentos
+    ///
+    /// * `lose` - Un booleano que indica si el jugador perdió o no.
     pub fn set_lose(&mut self, lose: bool) {
         self.character.as_mut().unwrap().set_lose(lose);
     }
 
+    /// Obtiene el poder del jugador como un porcentaje.
+    ///
+    /// # Retorna
+    ///
+    /// El poder del jugador como un porcentaje.
     pub fn get_power_as_percentage(&self) -> f64 {
         self.character.as_ref().unwrap().get_power_as_percentage()
     }
 
+    /// Obtiene la vida del jugador como un porcentaje.
+    ///
+    /// # Retorna
+    ///
+    /// La vida del jugador como un porcentaje.
     pub fn get_life_as_percentage(&self) -> f64 {
         self.character.as_ref().unwrap().get_life_as_percentage()
     }
 
+    /// Maneja la colisión entre dos jugadores.
+    ///
+    /// # Argumentos
+    ///
+    /// * `p1` - Una referencia mutable al primer jugador.
+    /// * `p2` - Una referencia mutable al segundo jugador.
     pub fn check_collision(p1: &mut Player, p2: &mut Player) {
         let mut p1_hit = false;
         let mut p2_hit = false;
@@ -153,6 +200,16 @@ impl Player {
         }
     }
 
+    /// Establece el estado de una tecla del jugador.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - Una referencia a la tecla que se está estableciendo.
+    /// * `value` - El valor booleano que indica si la tecla está presionada (`true`) o liberada (`false`).
+    ///
+    /// # Retorna
+    ///
+    /// El estado anterior de la tecla antes de que se estableciera.
     pub fn set_player_input(&mut self, key: &Key, value: bool) -> bool {
         let symbol = self.key_map.translate(key, self.character.as_ref().unwrap().is_flipped());
         if symbol == "" {
@@ -161,19 +218,30 @@ impl Player {
         self.input_manager.player_input.set_state(symbol, value)
     }
 
+    /// Elige un personaje para el jugador.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char_name` - El nombre del personaje.
+    /// * `context` - El contexto de textura de G2d.
     pub fn choose_char(&mut self, char_name: &str, context: G2dTextureContext) {
         let mut character = Character::new(char_name, context);
         if !self.first_player {
             character.set_as_second_player();
         }
         self.character = Some(character);
-
     }
 
+    /// Establece la paleta del personaje.
+    ///
+    /// # Argumentos
+    ///
+    /// * `palette_index` - El índice de la paleta.
     pub fn set_palette(&mut self, palette_index: usize) {
         self.character.as_mut().unwrap().set_palette(palette_index);
     }
 
+    /// Actualiza el estado del jugador.
     pub fn update(&mut self) {
         self.input_manager.update_hold_key();
         if self.character.as_mut().unwrap().is_flipping() {
@@ -198,15 +266,35 @@ impl Player {
         self.character.as_mut().unwrap().update();
     }
 
+     /// Maneja la entrada de teclado del jugador.
+    ///
+    /// # Argumentos
+    ///
+    /// * `ticks` - Una referencia mutable al contador de ticks que representa el tiempo actual del juego.
+    /// * `replace` - Un booleano que indica si reemplazar la última entrada en el búfer si es necesario.
     pub fn handle_key_input(&mut self, ticks: &mut u16, replace: bool) {
         self.input_manager
             .handle_key_input(ticks, if replace { self.replace_action } else { false });
     }
 
+    /// Indica si el jugador está reemplazando una acción.
+    ///
+    /// # Retorna
+    ///
+    /// `true` si el jugador está reemplazando una acción, de lo contrario, `false`.
     pub fn is_replacing_action(&self) -> bool {
         self.replace_action
     }
 
+    /// Indica si el jugador está en movimiento.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se está verificando.
+    ///
+    /// # Retorna
+    ///
+    /// `true` si el jugador está en movimiento con la tecla especificada, de lo contrario, `false`.
     pub fn is_moving(&self, key: Key) -> bool {
         if key == self.key_map.f || key == self.key_map.b || key == self.key_map.u || key == self.key_map.d {
             return true;
@@ -214,19 +302,35 @@ impl Player {
         false
     }
 
+    /// Establece que el jugador está reemplazando una acción.
     pub fn set_replacing(&mut self) {
         self.replace_action = true;
         self.replace_timer = 0;
     }
 
+    /// Obtiene una referencia mutable al sprite del jugador.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia mutable al sprite del jugador.
     pub fn get_mut_sprite(&mut self) -> MutexGuard<Sprite<Texture<Resources>>> {
         self.character.as_mut().unwrap().get_sprite()
     }
 
+    /// Obtiene una referencia a los colisionadores del jugador.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia a los colisionadores del jugador.
     pub fn get_clsns(&self) -> &Vec<Clsn> {
         self.character.as_ref().unwrap().get_animation_table().get_clsns()
     }
 
+    /// Indica si el jugador está realizando una acción.
+    ///
+    /// # Retorna
+    ///
+    /// `true` si el jugador está realizando una acción, de lo contrario, `false`.
     pub fn is_doing_action(&self) -> bool {
         self.character.as_ref().unwrap().has_control()
     }

@@ -6,6 +6,13 @@ const LOADING_SIZE: u32 = 20;
 const LOADING_TEXT: &str = "Loading...";
 const WINDOW_SIZE: [f64;2] = [512.0;2];
 
+/// Dibuja una pantalla de carga.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
 pub fn draw_loading(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs) {
     let text_width = glyphs.width(LOADING_SIZE, LOADING_TEXT).unwrap();
     let text_height = LOADING_SIZE as f64;

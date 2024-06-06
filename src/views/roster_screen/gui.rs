@@ -19,6 +19,16 @@ const LINE_WIDTH: f64 = 2.0;
 const TEXT_SIZE: u32 = 40;
 const COLOR_TEXT_SIZE: u32 = 25;
 
+/// Dibuja el selector de color para el personaje.
+/// 
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `preloads`: Referencia mutable a las cargas previas.
+/// - `index`: El índice del color.
+/// - `first_player`: Indica si es el primer jugador.
+/// - `picked`: Indica si el color ha sido seleccionado.
 pub fn draw_color_pick(
     c: Context,
     g: &mut G2d,
@@ -72,6 +82,15 @@ pub fn draw_color_pick(
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja la vista previa del personaje.
+/// 
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `preloads`: Referencia mutable a las cargas previas.
+/// - `index`: El índice del personaje.
+/// - `first_player`: Indica si es el primer jugador.
 pub fn draw_preview(
     c: Context,
     g: &mut G2d,
@@ -135,6 +154,13 @@ pub fn draw_preview(
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja el selector de personaje.
+/// 
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `index`: El índice del personaje.
+/// - `first_player`: Indica si es el primer jugador.
 pub fn draw_selector(c: Context, g: &mut G2d, index: usize, first_player: bool) {
     let characters_per_row = ((WINDOW_SIZE[0] - 2.0 * PADDING[0])
         / (CHARACTER_SIZE[0] + INTERNAL_SEPARATION[0]))
@@ -209,6 +235,12 @@ pub fn draw_selector(c: Context, g: &mut G2d, index: usize, first_player: bool) 
     );
 }
 
+/// Dibuja los personajes disponibles.
+/// 
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `roster`: La lista de personajes.
 pub fn draw_characters(c: Context, g: &mut G2d, roster: &Vec<Sff>) {
     if roster.is_empty() {
         return;

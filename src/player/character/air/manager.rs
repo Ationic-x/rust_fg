@@ -13,7 +13,11 @@ use gfx_device_gl::Resources;
 use piston_window::{G2dTextureContext, Texture};
 use sprite::Sprite;
 
-#[derive(Debug, PartialEq)]
+/// Struct que representa una caja de colisiones (incluye "HitBox" y "HurtBox").
+///
+/// Esta estructura se utiliza para definir áreas de colisión en un juego, que pueden ser
+/// utilizadas para detectar colisiones entre objetos del juego.
+#[derive(PartialEq)]
 pub struct Clsn {
     hitbox: bool,
     ofs_x: f64,
@@ -25,6 +29,10 @@ pub struct Clsn {
     height: f64,
 }
 
+/// Struct que representa una tabla de animaciones.
+///
+/// Esta estructura contiene las animaciones disponibles para un personaje en un juego.
+/// Permite cargar y manipular animaciones, así como también trabajar con las colisiones asociadas a cada una.
 pub struct AnimationTable {
     animations: HashMap<i32, Animation>,
     sff: Option<Arc<Mutex<Sff>>>,
@@ -32,28 +40,29 @@ pub struct AnimationTable {
     clsns: Vec<Clsn>,
 }
 
+/// Struct que representa un fotograma de una animación, incluyendo las colisiones.
 #[derive(Clone, Debug)]
 pub struct AnimFrame {
-    pub time: i32,
-    pub group: i16,
-    pub number: i16,
+    time: i32,
+    group: i16,
+    number: i16,
     x: i16,
     y: i16,
     src_alpha: u8,
     dst_alpha: u8,
     h: i8,
     v: i8,
-    pub ex: Vec<Vec<f64>>,
+    ex: Vec<Vec<f64>>,
     def1: bool,
     def2: bool,
 }
 
+/// Struct que representa una animación.
 #[derive(Clone)]
 pub struct Animation {
     sff: Option<Arc<Mutex<Sff>>>,
     spr: Option<Arc<Mutex<Sprite<Texture<Resources>>>>>,
     pub frames: Vec<AnimFrame>,
-    //tile: Tiling,
     loopstart: i32,
     interpolate_offset: Vec<i32>,
     interpolate_scale: Vec<i32>,
@@ -67,21 +76,13 @@ pub struct Animation {
     looptime: i32,
     nazotime: i32,
     mask: i16,
-    // srcAlpha: i16,
-    // dstAlpha: i16,
     loopend: bool,
-    // interpolate_offset_x: f64,
-    // interpolate_offset_y: f64,
-    // scale_x: f64,
-    // scale_y: f64,
-    // angle: f32,
-    // interpolate_blend_srcalpha: f32,
-    // interpolate_blend_dstalpha: f32,
-    //remap: RemapPreset,
-    // start_scale: [f32; 2],
 }
 
 impl AnimFrame {
+    /// Crea un nuevo fotograma de animación.
+    ///
+    /// Retorna un nuevo `AnimFrame` con valores predeterminados.
     fn new() -> Self {
         Self {
             time: -1,
@@ -101,7 +102,16 @@ impl AnimFrame {
 }
 
 impl Clsn {
-    fn new(left: f64, top: f64, right: f64, bottom: f64, hitbox: bool) -> Self {
+    /// Crea una nueva colisión.
+    ///
+    /// # Argumentos
+    ///
+    /// * `left` - La coordenada izquierda de la caja de colisión.
+    /// * `top` - La coordenada superior de la caja de colisión.
+    /// * `right` - La coordenada derecha de la caja de colisión.
+    /// * `bottom` - La coordenada inferior de la caja de colisión.
+    /// * `hitbox` - Indica si esta caja es una HitBox (true) o una HurtBox (false).
+    pub fn new(left: f64, top: f64, right: f64, bottom: f64, hitbox: bool) -> Self {
         let width = right - left;
         let height = bottom - top;
         Self {
@@ -116,10 +126,20 @@ impl Clsn {
         }
     }
 
+    /// Obtiene los parámetros necesarios para dibujar la caja.
+    ///
+    /// Retorna un arreglo que contiene la posición (x, y) y las dimensiones (ancho, alto) de la caja.
     pub fn get_rectangle(&self) -> [f64; 4] {
         [self.x, self.y, self.width, self.height]
     }
 
+    /// Asigna un valor a la `x` e `y` de la colisión en base a la `x` e `y` del personaje y si está girado.
+    ///
+    /// # Argumentos
+    ///
+    /// * `trans_x` - La coordenada x de traslación del personaje.
+    /// * `trans_y` - La coordenada y de traslación del personaje.
+    /// * `flip` - Indica si el personaje está girado horizontalmente (true) o no (false).
     pub fn set_position(&mut self, trans_x: f64, trans_y: f64, flip: bool) {
         if flip {
             self.x = trans_x - (self.ofs_x + self.width);
@@ -129,10 +149,18 @@ impl Clsn {
         self.y = trans_y + self.ofs_y;
     }
 
+    /// Devuelve si es una "HitBox" o una "HurtBox".
+    ///
+    /// Retorna true si la caja de colisión es una HitBox, o false si es una HurtBox.
     pub fn is_hitbox(&self) -> bool {
         self.hitbox
     }
 
+    /// Devuelve si la caja de colisiones entra en contacto con otra.
+    ///
+    /// # Argumentos
+    ///
+    /// * `clsn_p2` - Otra caja de colisión con la que se va a comprobar la colisión.
     pub fn collides(&self, clsn_p2: &Clsn) -> bool {
         !(self.x + self.width < clsn_p2.x
             || self.x > clsn_p2.x + clsn_p2.width
@@ -142,13 +170,14 @@ impl Clsn {
 }
 
 impl Animation {
+    /// Crear una nueva animación.
+    ///
+    /// Retorna una nueva `Animation` con valores predeterminados.
     fn new() -> Self {
         Self {
-            //palettedata: &'a PaletteList,
             sff: None,
             spr: None,
             frames: Vec::new(),
-            //tile: Tiling,
             loopstart: 0,
             interpolate_offset: Vec::new(),
             interpolate_scale: Vec::new(),
@@ -162,25 +191,20 @@ impl Animation {
             looptime: 0,
             nazotime: 0,
             mask: -1,
-            // srcAlpha: -1,
-            // dstAlpha: 0,
             loopend: false,
-            // interpolate_offset_x: 0.0,
-            // interpolate_offset_y: 0.0,
-            // scale_x: 0.0,
-            // scale_y: 0.0,
-            // angle: 0.0,
-            // interpolate_blend_srcalpha: 0.0,
-            // interpolate_blend_dstalpha: 0.0,
-            //remap: RemapPreset,
-            // start_scale: [0f32; 2],
         }
     }
 
+    /// Se le asigna una referencia al archivo SFF.
+    ///
+    /// # Argumentos
+    ///
+    /// * `sff` - Una referencia al SFF cargado.
     fn set_sff(&mut self, sff: Arc<Mutex<Sff>>) {
         self.sff = Some(sff);
     }
 
+    /// Se reinician varios parámetros de la animación por defecto.
     pub fn reset(&mut self) {
         self.current = 0;
         self.drawidx = 0;
@@ -189,10 +213,23 @@ impl Animation {
         self.loopend = false;
     }
 
+    /// Obtiene la diferencia entre el tiempo que dura la animación y el tiempo que lleva la animación.
     pub fn delta_time(&self) -> i32 {
         self.totaltime - self.sumtime
     }
 
+    /// Avanza un paso dentro de la animación, actualizando el tiempo o el frame por el que va.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char` - El personaje que está utilizando esta animación.
+    ///
+    /// Los pasos que sigue:
+    /// - Si es una animación en bucle, los valores nunca se reinician.
+    /// - Cada frame tiene definido un tiempo de duración, se asigna este valor la primera vez.
+    /// - Se va sumando el tiempo que llevamos en la animación y el frame.
+    /// - Cuando se finaliza un frame, se pasa al siguiente. Si se finaliza el tiempo de animación, reiniciamos.
+    /// - Mientras, el sprite se actualiza con la imagen del frame actual.
     pub fn step(&mut self, char: &mut Box<dyn Character>) {
         if self.totaltime > 1 && self.delta_time() == 0 && self.loopstart == 0 {
             self.reset();
@@ -238,6 +275,13 @@ impl Animation {
         }
     }
 
+    /// Actualiza un vector de colisiones en base a las colisiones del frame actual.
+    ///
+    /// # Argumentos
+    ///
+    /// * `clsns` - Un vector mutable de colisiones que se actualizará.
+    ///
+    /// A la hora de actualizar se intenta evitar redundancias al eliminar o agregar colisiones al vector.
     pub fn update_clsns(&self, clsns: &mut Vec<Clsn>) {
         let frame = &self.frames[self.current as usize];
         let mut i = 0;
@@ -290,12 +334,20 @@ impl Animation {
         }
     }
 
+    /// Asigna una referencia al sprite del personaje.
+    ///
+    /// # Argumentos
+    ///
+    /// * `spr` - Una referencia al sprite del personaje.
     pub fn set_sprite(&mut self, spr: Option<Arc<Mutex<Sprite<Texture<Resources>>>>>) {
         self.spr = spr;
     }
 }
 
 impl AnimationTable {
+    /// Crea una nueva tabla de animación.
+    ///
+    /// Retorna una nueva instancia de `AnimationTable` con valores iniciales.
     fn new() -> Self {
         Self {
             animations: HashMap::new(),
@@ -305,6 +357,11 @@ impl AnimationTable {
         }
     }
 
+    /// Le asigna una paleta a la animación utilizando un índice válido.
+    ///
+    /// # Argumentos
+    ///
+    /// * `palette` - El índice de la paleta que se desea asignar a la animación.
     pub fn set_palette(&mut self, palette: usize) {
         self.sff
             .as_mut()
@@ -314,10 +371,23 @@ impl AnimationTable {
             .set_palette(palette);
     }
 
+    /// Obtiene el sprite para trabajar con él, desbloqueando su Mutex.
+    ///
+    /// Retorna una referencia mutable al sprite.
     pub fn get_sprite(&self) -> MutexGuard<Sprite<Texture<Resources>>> {
         self.spr.as_ref().unwrap().lock().unwrap()
     }
 
+    /// Lee las líneas de un archivo en formato AIR y devuelve una animación.
+    ///
+    /// # Argumentos
+    ///
+    /// * `lines` - Vector de referencias de texto que representan las líneas del archivo AIR.
+    /// * `i` - Índice de la línea actual que se está leyendo.
+    ///
+    /// # Retorna
+    ///
+    /// Una opción que contiene la animación leída, o None si no se encontró ninguna animación.
     fn read_action(
         &mut self,
         lines: &Vec<&str>,
@@ -345,6 +415,11 @@ impl AnimationTable {
         Ok(None)
     }
 
+    /// Le asigna un sprite a la tabla de animación y envía su referencia a sus animaciones.
+    ///
+    /// # Argumentos
+    ///
+    /// * `spr` - El sprite que se desea asignar a la tabla de animación.
     pub fn set_sprite(&mut self, spr: sprite::Sprite<Texture<Resources>>) {
         let sprite = Arc::new(Mutex::new(spr));
 
@@ -352,12 +427,21 @@ impl AnimationTable {
         self.set_animation_sprite();
     }
 
+    /// Asigna un sprite a todas las animaciones que contiene la tabla de animación.
     fn set_animation_sprite(&mut self) {
         for animation in self.animations.values_mut() {
             animation.set_sprite(self.spr.clone());
         }
     }
 
+    /// Se crea en base a los parámetros un SFF y se le asigna. A su vez, este SFF se le asigna a todas sus animaciones.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char_name` - Nombre del personaje.
+    /// * `filename` - Nombre del archivo que contiene el SFF.
+    /// * `char` - Indica si se trata de un personaje (true) o no (false).
+    /// * `context` - Contexto de textura G2d.
     pub fn set_sff(
         &mut self,
         char_name: &str,
@@ -375,6 +459,7 @@ impl AnimationTable {
         self.set_animation_sff();
     }
 
+    /// Asigna un SFF a todos las animaciones de una table de animación
     fn set_animation_sff(&mut self) {
         if self.sff.is_none() {
             println!("Set the sff");
@@ -386,12 +471,12 @@ impl AnimationTable {
         }
     }
 
-    // pub fn reset_animations(&mut self) {
-    //     for animation in self.animations.values_mut() {
-    //         animation.reset();
-    //     }
-    // }
-
+    /// Método el cual actualiza una animación especificada por un personaje,
+    /// y a su vez se actualiza el personaje en base a la misma.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char` - Referencia mutable al personaje que se actualizará.
     pub fn update_sprite(&mut self, char: &mut Box<dyn Character>) {
         let animation = self.animations.get_mut(char.get_anim()).unwrap();
         let flip = char.is_flipped();
@@ -422,18 +507,37 @@ impl AnimationTable {
         char.set_time(animation.time);
     }
 
+    /// Obtiene una referencia a la lista de cajas de colisión.
+    ///
+    /// Retorna una referencia a la lista de cajas de colisión.
     pub fn get_clsns(&self) -> &Vec<Clsn> {
         &self.clsns
     }
 }
 
+/// Lee línea por línea de un archivo con formato AIR y devuelve la animación y su número,
+/// si es que se cumplen las condiciones del formato.
+///
+/// # Argumentos
+///
+/// * `lines` - Un vector de referencias a cadenas que representan las líneas del archivo AIR.
+/// * `i` - Un contador de línea mutable que se utiliza para rastrear la posición actual en el vector `lines`.
+///
+/// # Retorna
+///
+/// Una tupla que contiene el número de la animación y la propia animación, envueltos en `Some`, si se cumplen las condiciones del formato AIR.
+/// Si no se encuentra una animación válida, devuelve `None`. En caso de error en el formato del archivo, devuelve un `Result` que encapsula un `AirError`.
+///
+/// # Ejemplo de formato
+///
+/// El formato esperado para la línea que indica el comienzo de una animación debe ser similar a `[Begin Action 5]`.
+/// Esto implica que la cadena debe comenzar con `[Begin`, seguido de un espacio y la palabra `Action`, seguido de otro espacio y el número de la animación, y finalmente `]`.
 fn read_action(lines: &Vec<&str>, i: &mut usize) -> Result<Option<(i32, Animation)>, AirError> {
     let length = lines.len();
 
     let mut name = String::new();
     let mut subname = String::new();
 
-    // Reading section name
     while *i < length {
         let sec = &lines[*i];
         if sec.is_empty() || !sec.starts_with('[') {
@@ -493,6 +597,37 @@ fn read_action(lines: &Vec<&str>, i: &mut usize) -> Result<Option<(i32, Animatio
     }
 }
 
+/// Lee una línea de un archivo con formato tipo AIR, intentando interpretarla como un fotograma de animación.
+///
+/// # Argumentos
+///
+/// * `line` - Una referencia a una cadena que representa una línea del archivo con formato AIR.
+///
+/// # Retorna
+///
+/// Un `Option<AnimFrame>` que contiene los datos del fotograma de animación si la línea se puede interpretar como tal.
+/// Si la línea no cumple con el formato esperado para un fotograma de animación, retorna `None`.
+///
+/// # Formato Esperado
+///
+/// Un fotograma de animación tiene el siguiente formato:
+/// - Los primeros cinco valores son obligatorios: `group`, `number`, `x`, `y` y `time`.
+/// - Luego, puede haber un sexto valor opcional para indicar espejado o volteado horizontal y/o verticalmente.
+/// - Después, puede haber un séptimo valor opcional para indicar transparencia.
+/// - Finalmente, puede haber hasta tres valores adicionales opcionales para datos extras.
+///
+/// Ejemplo de formato:
+/// ```text
+/// Clsn2: 2
+/// Clsn2[0] = 12,-11,-11,-94
+/// Clsn2[1] = -6,-109, 6,-9
+/// 41,0, 0,0, 7
+/// Loopstart
+/// Clsn2Default: 2
+/// Clsn2[0] = 14,-23,-11,-90
+/// Clsn2[1] = -4,-105, 9,-89
+/// 41,7, 0,0, 4
+/// 41,8, 0,0, 4
 fn read_anim_frame(line: &String) -> Option<AnimFrame> {
     if line.is_empty() || !line.starts_with(|c: char| c.is_digit(10) || c == '-') {
         return None;
@@ -610,6 +745,15 @@ fn read_anim_frame(line: &String) -> Option<AnimFrame> {
     Some(af)
 }
 
+/// Convierte una cadena de texto en un número de punto flotante (f64) y lo devuelve.
+///
+/// # Argumentos
+///
+/// * `s` - Una referencia a una cadena de texto que se convertirá en un número de punto flotante.
+///
+/// # Retorna
+///
+/// Un valor de punto flotante (f64) equivalente al contenido de la cadena de texto.
 fn atof(s: &str) -> f64 {
     let mut f = 0.0;
     let mut chars = s.trim().chars();
@@ -671,6 +815,22 @@ fn atof(s: &str) -> f64 {
     f
 }
 
+/// Método para leer línea por línea de un archivo con formato tipo AIR y devolver una animación.
+///
+/// Procedimiento:
+/// - Primero se inicializa por defecto la animación.
+/// - Seguidamente se lee línea por línea del archivo y se procesan los frames o las colisiones.
+/// - Si se encuentra un frame, se almacena en la animación.
+/// - Si no es un frame, se actualizan parámetros extras como si la animación tiene un bucle o el tiempo que dura.
+///
+/// # Argumentos
+///
+/// * `lines` - Una referencia a un vector de cadenas de texto que representan las líneas del archivo.
+/// * `i` - Un mutable usize que representa el índice actual dentro del vector de líneas.
+///
+/// # Retorna
+///
+/// Un resultado que contiene una animación si la lectura fue exitosa, o un error `AirError` si hubo un problema de formato.
 fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Result<Animation, AirError> {
     let mut a = Animation::new();
 
@@ -858,6 +1018,15 @@ fn read_animation(lines: &Vec<&str>, i: &mut usize) -> Result<Animation, AirErro
     Ok(a)
 }
 
+/// Método para convertir una cadena de texto en un i32 y devolverlo.
+///
+/// # Argumentos
+///
+/// * `string` - Una referencia a una cadena de texto que se desea convertir en un i32.
+///
+/// # Retorna
+///
+/// Un resultado que contiene el i32 convertido si la conversión fue exitosa, o un error si hubo un problema.
 fn atoi(string: &String) -> Result<i32, Error> {
     let mut n = 0;
     let trimmed_str = string.trim();
@@ -894,6 +1063,15 @@ fn atoi(string: &String) -> Result<i32, Error> {
     Ok(n as i32)
 }
 
+/// Método que lee un archivo tipo AIR y devuelve una tabla de animación.
+///
+/// # Argumentos
+///
+/// * `air` - Una cadena de texto que representa el contenido del archivo AIR.
+///
+/// # Retorna
+///
+/// Un resultado que contiene la tabla de animación si la lectura fue exitosa, o un error `AirError` si hubo un problema de formato.
 fn read_animation_table(air: &str) -> Result<AnimationTable, AirError> {
     let mut i = 0;
     let mut at = AnimationTable::new();
@@ -902,6 +1080,15 @@ fn read_animation_table(air: &str) -> Result<AnimationTable, AirError> {
     Ok(at)
 }
 
+/// Método que busca un archivo AIR y devuelve una tabla de animación.
+///
+/// # Argumentos
+///
+/// * `air` - Una cadena de texto que representa la ruta del archivo AIR.
+///
+/// # Retorna
+///
+/// Un resultado que contiene la tabla de animación si la lectura y el análisis fueron exitosos, o un error `AirError` si hubo un problema.
 pub fn parse_air(air: &str) -> Result<AnimationTable, AirError> {
     let content = match std::fs::read_to_string(air) {
         Ok(content) => content,

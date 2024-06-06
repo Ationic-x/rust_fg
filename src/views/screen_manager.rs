@@ -10,22 +10,32 @@ use piston_window::{G2d, PistonWindow};
 
 use crate::{error::pop_up::show_error_popup, preloader::preloader::Preloads};
 
-use super::{common::Screen, FightScreen, LoadingScreen, MainScreen, RosterScreen};
+use super::{screen::Screen, FightScreen, LoadingScreen, MainScreen, RosterScreen};
 
+/// Enumera los tipos de pantalla disponibles en el juego.
 #[derive(PartialEq)]
 pub enum ScreenType {
+    /// Pantalla principal.
     Main,
+    /// Pantalla de selección de personajes.
     Roster,
+    /// Pantalla de combate.
     Fight,
 }
 
+/// Enumera los tipos de eventos que pueden ocurrir en el juego.
 pub enum Event {
+    /// Indica que la pantalla está lista.
     ScreenReady(),
+    /// Establece los paletas de colores para los personajes.
     SetPalettes([usize; 2]),
+    /// Establece los nombres de los personajes.
     SetCharacters([String; 2]),
+    /// Cambia la pantalla actual a otro tipo de pantalla.
     ChangeScreen(ScreenType),
 }
 
+/// Struct que administra las pantallas en el juego y conserva datos entre ellas.
 pub struct ScreenManager {
     current_screen: Option<Box<dyn Screen>>,
     event_sender: Sender<Event>,
@@ -37,6 +47,16 @@ pub struct ScreenManager {
 }
 
 impl ScreenManager {
+    /// Crea una nueva instancia del administrador de pantallas.
+    ///
+    /// # Argumentos
+    ///
+    /// * `screen_type` - El tipo de pantalla inicial.
+    /// * `window` - La ventana de Piston para el juego.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `ScreenManager`.
     pub fn new(screen_type: ScreenType, window: &mut PistonWindow) -> Self {
         let preloads = match Preloads::new(window) {
             Ok(_preloads) => _preloads,
@@ -79,6 +99,11 @@ impl ScreenManager {
         }
     }
 
+    /// Cambia la pantalla actual a otro tipo de pantalla.
+    ///
+    /// # Argumentos
+    ///
+    /// * `window` - La ventana de Piston para el juego.
     pub fn switch_screen(&mut self, window: &mut PistonWindow) {
         let cloned_sender = self.event_sender.clone();
         self.current_screen = match self.switch_screen {
@@ -99,6 +124,11 @@ impl ScreenManager {
         };
     }
 
+    /// Actualiza el estado de la pantalla actual.
+    ///
+    /// # Argumentos
+    ///
+    /// * `window` - La ventana de Piston para el juego.
     pub fn update(&mut self, window: &mut PistonWindow) {
         if let Some(screen) = self.current_screen.as_mut() {
             screen.update();
@@ -126,18 +156,35 @@ impl ScreenManager {
         }
     }
 
+    /// Maneja el evento de presionar una tecla en la pantalla actual.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha presionado.
     pub fn on_press(&mut self, key: Key) {
         if let Some(screen) = self.current_screen.as_mut() {
             screen.on_press(key);
         }
     }
 
+    /// Maneja el evento de soltar una tecla en la pantalla actual.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha soltado.
     pub fn on_release(&mut self, key: Key) {
         if let Some(screen) = self.current_screen.as_mut() {
             screen.on_release(key);
         }
     }
 
+    /// Dibuja el contenido de la pantalla actual.
+    ///
+    /// # Argumentos
+    ///
+    /// * `c` - El contexto de dibujo.
+    /// * `g` - El contexto de gráficos.
+    /// * `device` - El dispositivo de dibujo.
     pub fn draw(&mut self, c: Context, g: &mut G2d, device: &mut Device) {
         if let Some(screen) = self.current_screen.as_mut() {
             screen.draw(c, g, device);

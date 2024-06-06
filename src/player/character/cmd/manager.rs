@@ -3,15 +3,15 @@ use crate::{error::cmd_error::CmdError, player::input::manager::CommandInput, CK
 use regex::Regex;
 use std::collections::HashSet;
 
-/// Represents a command, which is a sequence of command elements forming a movement execution.
-/// This struct holds the list of command elements and the name of the command.
+/// Representa un comando, que es una secuencia de elementos que forman una ejecución de movimiento.
+/// Contiene la lista de elementos de comando y el nombre del comando.
 #[derive(Debug, Clone)]
 struct Command {
     cmd_elements: Vec<CommandElement>,
     name: String,
 }
 
-/// Represents a command element, which is the smallest unit of a command, containing the keys pressed and timing information.
+/// Representa un elemento de comando, que es la unidad más pequeña de un comando, y contiene las teclas presionadas y la información de temporización.
 #[derive(Debug, Clone)]
 struct CommandElement {
     elements: HashSet<CK>,
@@ -19,9 +19,8 @@ struct CommandElement {
     time: u16,
 }
 
-/// Represents a node in a tree of commands.
-/// This struct represents a branch in the command tree and contains information about the command elements,
-/// name of the command, sensitivity, input window, and sub-nodes.
+/// Representa un nodo en un árbol de comandos.
+/// Contiene información sobre los elementos de comando, nombre del comando, sensibilidad, ventana de entrada y sub-nodos.
 #[derive(Debug, Clone)]
 pub struct CommandNode {
     level: usize,
@@ -33,13 +32,11 @@ pub struct CommandNode {
 }
 
 impl Command {
-    /// Creates a new instance of `Command` with an empty list of command elements and an empty name.
+    /// Crea una nueva instancia de `Command` con valores por defecto.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// A new `Command` instance:
-    /// * `cmd_elements` initialized with an empty vector.
-    /// * `name` initialized with an empty name.
+    /// Una nueva instancia de `Command` con valores por defecto
     fn new() -> Self {
         Self {
             cmd_elements: Vec::new(),
@@ -49,22 +46,18 @@ impl Command {
 }
 
 impl CommandElement {
-    /// Creates a new instance of `CommandElement` with the given inputs, time, sensitivity, and directions and actions.
-    /// It converts the inputs into command keys based on the provided directions and actions mapping.
+    /// Crea una nueva instancia de `CommandElement` con los valores especificados.
     ///
-    /// # Arguments
+    /// # Agumentos
     ///
-    /// * `inputs` - A HashSet of String containing the inputs for the command element.
-    /// * `time` - A u16 value representing the timing for the command element.
-    /// * `sensitive` - A boolean indicating whether the command element is sensitive.
-    /// * `directions_and_actions` - A reference to an array of tuples containing the mappings of directions and actions.
+    /// * `inputs` - Un HashSet de String que contiene los inputs para el elemento de comando.
+    /// * `time` - Un valor u16 que representa el tiempo para el elemento de comando.
+    /// * `sensitive` - Un booleano que indica si el elemento de comando es sensible.
+    /// * `directions_and_actions` - Una referencia a una matriz de tuplas que contiene los mapeos de direcciones y acciones.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// A new `CommandElement` instance:
-    /// * `elements` initialized with the specified inputs.
-    /// * `time` initialized wit the specified time.
-    /// * `sensitive` intialized with the specified sensitivity.
+    /// Una nueva instancia de `CommandElement` iniciada con los valores pasados.
     fn new(
         inputs: HashSet<String>,
         time: u16,
@@ -88,16 +81,11 @@ impl CommandElement {
 }
 
 impl CommandNode {
-    /// Creates a new instance of `CommandNode` with default values.
+    /// Crea una nueva instancia de `CommandNode` con valores por defecto.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// A new `CommandNode` instance:
-    /// * `cmd_elements` initialized to `None`.
-    /// * `name` initialized to `None`.
-    /// * `sensitive` initialized to `false`.
-    /// * `input_window` initialized with an empty `HashSet`.
-    /// * `sub_node` initialized with an empty vector.
+    /// Una nueva instancia de `CommandNode` con valores iniciales predeterminados.
     fn new() -> Self {
         Self {
             level: 0,
@@ -109,13 +97,13 @@ impl CommandNode {
         }
     }
 
-    /// Inserts a command into the command tree starting from himself.
-    /// It recursively traverses the tree and inserts the command elements at appropriate positions.
+   /// Inserta un comando en el árbol de comandos a partir de él mismo.
+    /// Recorre recursivamente el árbol e inserta los elementos de comando en las posiciones apropiadas.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `command` - A reference to the command to be inserted.
-    /// * `pos` - The position where the command element should be inserted.
+    /// * `command` - Una referencia al comando que se va a insertar.
+    /// * `pos` - La posición donde debería insertarse el elemento de comando.
     fn insert(&mut self, command: &Command, pos: usize) {
         if let Some(cmd_element) = command.cmd_elements.get(pos) {
             if let Some(node) = self.sub_nodes.iter_mut().find(|node| {
@@ -140,17 +128,17 @@ impl CommandNode {
         }
     }
 
-    /// Searches for a matching command based on the input buffer starting from the specified position.
-    /// It recursively searches the command tree for a matching command and returns its name if found.
+    /// Busca un comando que coincida con el búfer de entrada comenzando desde la posición especificada.
+    /// Busca de forma recursiva en el árbol de comandos un comando que coincida y devuelve su nombre si lo encuentra.
     ///
-    /// # Arguments
+    /// # Argumentos
     ///
-    /// * `input_buffer` - A reference to the input buffer containing command inputs.
-    /// * `pos` - The position in the input buffer to start searching from.
+    /// * `input_buffer` - Una referencia al búfer de entrada que contiene los inputs de comando.
+    /// * `pos` - La posición en el búfer de entrada desde la cual comenzar la búsqueda.
     ///
-    /// # Returns
+    /// # Retorna
     ///
-    /// An optional reference to the `name` of the matching command if found, otherwise `None`.
+    /// Una referencia opcional al `nombre` del comando que coincide, de lo contrario `None`.
     pub fn search(&self, input_buffer: &Vec<CommandInput>, pos: usize) -> Option<&String> {
         let sub_nodes = &self.sub_nodes;
         let ib_len = input_buffer.len();
@@ -219,6 +207,7 @@ impl CommandNode {
     //     }
     // }
 
+    /// Ordena el árbol de comandos dando prioridad a las ramas más cortas.
     fn sort(&mut self) {
         let priorities = vec![CK::LK, CK::MK, CK::HK, CK::LP, CK::HP, CK::MP];
 
@@ -254,28 +243,28 @@ impl CommandNode {
     }
 }
 
-/// Reads a command file and parses its contents to create a vector of commands.
+/// Lee un archivo de comandos y analiza su contenido para crear un vector de comandos.
 ///
-/// This function reads a command file specified by the filename parameter. It parses the file contents
-/// to extract the commands and their associated details, such as names, input sequences, and timing information.
-/// The command file format should adhere to the following conventions:
-/// - The file should contain sections delineated by '#commands' and '#endcommands' markers.
-/// - Each command should be specified in the following format:
-///   - 'name=<command_name>' to specify the command name.
-///   - 'command=<input_sequence>' to specify the input sequence for the command.
-///   - Optionally, 'time=<timing_values>' can be used to specify the timing values for the command.
-/// - The input sequence should consist of comma-separated inputs.
-/// - Inputs can include special characters such as '$' for multiple inputs, '>' for sensitivity, and '/' for holding.
-/// - Timing values can be specified as a comma-separated list of integers.
+/// Esta función lee un archivo de comandos especificado por el parámetro de nombre de archivo. Analiza el contenido del archivo
+/// para extraer los comandos y sus detalles asociados, como nombres, secuencias de entrada e información de temporización.
+/// El formato del archivo de comandos debe adherirse a las siguientes convenciones:
+/// - El archivo debe contener secciones delimitadas por marcadores '#commands' y '#endcommands'.
+/// - Cada comando debe especificarse en el siguiente formato:
+///   - 'name=<nombre_del_comando>' para especificar el nombre del comando.
+///   - 'command=<secuencia_de_entrada>' para especificar la secuencia de entrada para el comando.
+///   - Opcionalmente, se puede usar 'time=<valores_de_tiempo>' para especificar los valores de temporización para el comando.
+/// - La secuencia de entrada debe consistir en inputs separados por comas.
+/// - Los inputs pueden incluir caracteres especiales como '$' para múltiples inputs, '>' para sensibilidad y '/' para retención.
+/// - Los valores de temporización se pueden especificar como una lista separada por comas de enteros.
 ///
-/// # Arguments
+/// # Argumentos
 ///
-/// * `filename` - An optional reference to a string containing the name of the command file to read.
+/// * `filename` - Una referencia opcional a una cadena que contiene el nombre del archivo de comandos a leer.
 ///
-/// # Returns
+/// # Retorna
 ///
-/// An `io::Result` containing a vector of `Command` instances if the file is successfully read and parsed,
-/// otherwise an `io::Error` indicating the encountered issue.
+/// Un `io::Result` que contiene un vector de instancias de `Command` si el archivo se lee y analiza correctamente,
+/// de lo contrario, un `io::Error` indicando el problema encontrado.
 fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
     let mut commands: Vec<Command> = Vec::new();
 
@@ -325,18 +314,18 @@ fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
     commands
 }
 
-/// Parses a command sequence and populates the corresponding command with the parsed details.
+/// Analiza una secuencia de comandos y completa el comando correspondiente con los detalles analizados.
 ///
-/// This function takes a vector of command elements, position, commands vector, and timing information as input.
-/// It iterates over each element in the command sequence, parses it, and populates the command with the parsed details.
-/// The parsed details include the inputs, timing, sensitivity, and any special characters present in the command sequence.
+/// Esta función toma un vector de elementos de comando, una posición, un vector de comandos y la información de temporización como entrada.
+/// Itera sobre cada elemento en la secuencia de comandos, lo analiza y completa el comando con los detalles analizados.
+/// Los detalles analizados incluyen los inputs, el tiempo, la sensibilidad y cualquier caracter especial presente en la secuencia de comandos.
 ///
-/// # Arguments
+/// # Argumentos
 ///
-/// * `elements` - A vector of string slices representing the command elements.
-/// * `pos` - The position in the commands vector where the command details should be populated.
-/// * `commands` - A mutable reference to a vector of Command instances.
-/// * `time` - A reference to a vector containing the timing information for the command.
+/// * `elements` - Un vector de fragmentos de cadena que representan los elementos de comando.
+/// * `pos` - La posición en el vector de comandos donde deben completarse los detalles del comando.
+/// * `commands` - Una referencia mutable a un vector de instancias de `Command`.
+/// * `time` - Una referencia a un vector que contiene la información de temporización para el comando.
 fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, time: &Vec<u16>) {
     let mut hold_element = String::new();
     let mut hold = false;
@@ -486,19 +475,19 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
     }
 }
 
-/// Creates a command tree for a given character name by reading the corresponding command file.
+/// Crea un árbol de comandos para un personaje dado leyendo el archivo de comandos correspondiente.
 ///
-/// This function constructs a command tree for a specified character by reading the corresponding command file.
-/// It parses the command file contents to extract the commands and their associated details.
-/// The command file should be located in the 'src/assets' directory and named as '<character_name>.cmd'.
+/// Esta función construye un árbol de comandos para un personaje especificado leyendo el archivo de comandos correspondiente.
+/// Analiza el contenido del archivo de comandos para extraer los comandos y sus detalles asociados.
+/// El archivo de comandos debe estar ubicado en el directorio 'src/assets' y tener el nombre '<character_name>.cmd'.
 ///
-/// # Arguments
+/// # Argumentos
 ///
-/// * `char_name` - A string slice containing the name of the character for which the command tree is to be created.
+/// * `char_name` - Una porción de cadena que contiene el nombre del personaje para el cual se creará el árbol de comandos.
 ///
-/// # Returns
+/// # Retorna
 ///
-/// A `CommandNode` representing the root of the command tree with her branches for the specified character.
+/// Un `CommandNode` que representa la raíz del árbol de comandos con sus ramas para el personaje especificado.
 pub fn create_command_tree(cmd: &str) -> Result<CommandNode, CmdError> {
     let content = match std::fs::read_to_string(cmd) {
         Ok(content) => content,

@@ -3,9 +3,9 @@ const MAX_PAL_NO: usize = 10;
 use std::{
     collections::HashMap,
     io::{self, Cursor, Read, Seek, SeekFrom},
-    path::PathBuf, rc::Rc,
+    path::PathBuf,
+    rc::Rc,
 };
-
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use flate2::read::ZlibDecoder;
@@ -15,16 +15,18 @@ use piston_window::{G2dTextureContext, TextureSettings};
 
 use crate::error::sff_error::SffError;
 
-
+/// Estructura que representa un identificador de sprite.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SpriteId {
     pub group: u16,
     pub image: u16,
 }
 
+/// Estructura que representa una versión con cuatro componentes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Version(u8, u8, u8, u8);
 
+/// Estructura que representa la cabecera de un archivo SFF.
 #[derive(Debug, Clone, Copy)]
 struct SffHeader {
     ver0: u8,
@@ -39,15 +41,21 @@ struct SffHeader {
     tofs: u32,
 }
 
+/// Representa un decodificador para archivos SFF, utilizado para manejar datos comprimidos
+/// como sprites, paletas y grupos.
+///
+/// La estructura `Sff` contiene la cabecera del archivo SFF, una lista de sprites, una lista de paletas,
+/// el nombre del archivo y el contexto gráfico utilizado para renderizar los sprites.
 pub struct Sff {
     header: SffHeader,
     pub sprites: HashMap<[i16; 2], Sprite>,
     pub pal_list: PaletteList,
     filename: String,
     name: String,
-    context: G2dTextureContext
+    context: G2dTextureContext,
 }
 
+/// Estructura que representa un color con componentes RGBA.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Color {
     red: u8,
@@ -56,6 +64,7 @@ pub struct Color {
     alpha: u8,
 }
 
+/// Estructura que representa una lista de paletas.
 #[derive(Debug, Clone)]
 pub struct PaletteList {
     palettes: Vec<Vec<Color>>,
@@ -63,6 +72,11 @@ pub struct PaletteList {
     pal_table: HashMap<[i16; 2], i32>,
 }
 
+/// Representa un sprite en un archivo SFF.
+///
+/// Un sprite contiene la información necesaria para su representación gráfica,
+/// incluyendo la paleta de colores, textura, datos sin procesar y metadatos
+/// relacionados con su grupo, número y dimensiones.
 #[derive(Debug, Clone)]
 pub struct Sprite {
     pub pal: Vec<Color>,
@@ -79,24 +93,56 @@ pub struct Sprite {
 }
 
 impl From<Version> for (u8, u8, u8, u8) {
+    /// Convierte un `Version` a una tupla de cuatro elementos (u8, u8, u8, u8).
+    ///
+    /// # Argumentos
+    ///
+    /// * `v` - La versión a convertir.
+    ///
+    /// # Retorna
+    ///
+    /// Una tupla de cuatro elementos que representa la versión.
     fn from(v: Version) -> Self {
         (v.0, v.1, v.2, v.3)
     }
 }
 
 impl From<SpriteId> for (u16, u16) {
+    /// Convierte un `SpriteId` a una tupla de dos elementos (u16, u16).
+    ///
+    /// # Argumentos
+    ///
+    /// * `sprite_id` - El identificador de sprite a convertir.
+    ///
+    /// # Retorna
+    ///
+    /// Una tupla de dos elementos que representa el identificador de sprite.
     fn from(SpriteId { group, image }: SpriteId) -> Self {
         (group, image)
     }
 }
 
 impl From<(u16, u16)> for SpriteId {
+    /// Convierte una tupla de dos elementos (u16, u16) a un `SpriteId`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `tuple` - La tupla a convertir.
+    ///
+    /// # Retorna
+    ///
+    /// Un `SpriteId` que representa la tupla.
     fn from((group, image): (u16, u16)) -> Self {
         SpriteId { group, image }
     }
 }
 
 impl Color {
+    /// Crea un nuevo `Color` con valores por defecto (blanco opaco).
+    ///
+    /// # Retorna
+    ///
+    /// Un `Color` con componentes RGBA todos establecidos en 255.
     fn new() -> Self {
         Self {
             red: 255,
@@ -106,12 +152,22 @@ impl Color {
         }
     }
 
+    /// Obtiene una representación vectorial del color.
+    ///
+    /// # Retorna
+    ///
+    /// Un `Vec<u8>` que contiene los componentes RGBA del color.
     pub fn get_vec(&self) -> Vec<u8> {
         vec![self.red, self.green, self.blue, self.alpha]
     }
 }
 
 impl Sprite {
+    /// Crea un nuevo sprite vacío.
+    ///
+    /// # Retorna
+    ///
+    /// Un nuevo sprite con valores por defecto.
     pub fn new() -> Self {
         Self {
             pal: Vec::new(),
@@ -128,10 +184,11 @@ impl Sprite {
         }
     }
 
-    // fn find_color(&self, color: &Color) -> Option<usize> {
-    //     self.pal.iter().position(|value| value == color)
-    // }
-
+    /// Comparte y copia los datos de otro sprite.
+    ///
+    /// # Argumentos
+    ///
+    /// * `src` - El sprite del cual se copiarán los datos.
     fn share_copy(&mut self, src: Sprite) {
         self.pal = src.pal;
         self.tex = src.tex;
@@ -143,6 +200,18 @@ impl Sprite {
         self.raw = src.raw;
     }
 
+    /// Lee la cabecera de un sprite versión 1 desde un flujo de bytes (SFF en bytes).
+    ///
+    /// # Argumentos
+    ///
+    /// * `bytes` - El flujo de bytes desde el cual leer.
+    /// * `ofs` - Desplazamiento de los datos del sprite.
+    /// * `size` - Tamaño de los datos del sprite.
+    /// * `link` - Enlace del sprite.
+    ///
+    /// # Retorna
+    ///
+    /// El sprite modificado.
     fn read_header_v1(
         &mut self,
         bytes: &mut Cursor<&Vec<u8>>,
@@ -161,6 +230,21 @@ impl Sprite {
         Ok(self)
     }
 
+    /// Lee los datos de un sprite versión 1 desde un flujo de bytes (SFF en bytes).
+    ///
+    /// # Argumentos
+    ///
+    /// * `bytes` - El flujo de bytes desde el cual leer.
+    /// * `offset` - Desplazamiento actual en el flujo de bytes.
+    /// * `datasize` - Tamaño de los datos del sprite.
+    /// * `next_subheader` - Desplazamiento del siguiente subencabezado.
+    /// * `prev` - Sprite anterior.
+    /// * `pl` - Lista de paletas.
+    /// * `c00` - Indicador para el manejo de paletas.
+    ///
+    /// # Retorna
+    ///
+    /// El sprite modificado.
     fn read_v1(
         &mut self,
         mut bytes: &mut Cursor<&Vec<u8>>,
@@ -225,6 +309,11 @@ impl Sprite {
         Ok(self)
     }
 
+    /// Establece los píxeles del sprite.
+    ///
+    /// # Argumentos
+    ///
+    /// * `px` - Vector de bytes que representa los píxeles.
     fn set_pxl(&mut self, px: Vec<u8>) {
         if px.len() == 0 {
             return;
@@ -235,6 +324,15 @@ impl Sprite {
         self.raw = px;
     }
 
+    /// Decodifica datos RLE (Run-Length Encoding) en formato PCX.
+    ///
+    /// # Argumentos
+    ///
+    /// * `rle` - Datos RLE a decodificar.
+    ///
+    /// # Retorna
+    ///
+    /// Vector de bytes decodificados.
     fn rle_pcx_decode(&mut self, rle: Vec<u8>) -> Vec<u8> {
         if rle.len() == 0 || self.rle <= 0 {
             return rle;
@@ -270,6 +368,16 @@ impl Sprite {
         p
     }
 
+    /// Lee la cabecera de un archivo PCX.
+    ///
+    /// # Argumentos
+    ///
+    /// * `bytes` - El flujo de bytes desde el cual leer.
+    /// * `offset` - Desplazamiento actual en el flujo de bytes.
+    ///
+    /// # Retorna
+    ///
+    /// Resultado vacío en caso de éxito o un error en caso contrario.
     fn read_pcx_header(
         &mut self,
         bytes: &mut Cursor<&Vec<u8>>,
@@ -309,6 +417,21 @@ impl Sprite {
         Ok(())
     }
 
+    /// Lee la cabecera de un sprite versión 2 desde un flujo de bytes.
+    ///
+    /// # Argumentos
+    ///
+    /// * `bytes` - El flujo de bytes desde el cual leer.
+    /// * `ofs` - Desplazamiento de los datos del sprite.
+    /// * `size` - Tamaño de los datos del sprite.
+    /// * `lofs` - Desplazamiento del enlace.
+    /// * `tofs` - Desplazamiento de la textura.
+    /// * `link` - Enlace del sprite.
+    /// * `pl` - Lista de paletas.
+    ///
+    /// # Retorna
+    ///
+    /// El sprite modificado.
     fn read_header_v2(
         &mut self,
         bytes: &mut Cursor<&Vec<u8>>,
@@ -350,12 +473,24 @@ impl Sprite {
         Ok(self)
     }
 
+    /// Lee los datos de un sprite versión 2 desde un flujo de bytes.
+    ///
+    /// # Argumentos
+    ///
+    /// * `bytes` - El flujo de bytes desde el cual leer.
+    /// * `offset` - Desplazamiento actual en el flujo de bytes.
+    /// * `datasize` - Tamaño de los datos del sprite.
+    /// * `context` - Contexto de textura para la creación de texturas.
+    ///
+    /// # Retorna
+    ///
+    /// El sprite modificado.
     fn read_v2(
         &mut self,
         bytes: &mut Cursor<&Vec<u8>>,
         offset: i64,
         mut datasize: u32,
-        context: &mut G2dTextureContext
+        context: &mut G2dTextureContext,
     ) -> Result<&mut Self, SffError> {
         let is_raw = false;
         let mut px: Vec<u8>;
@@ -375,7 +510,7 @@ impl Sprite {
                     self.set_raw(px);
                 }
                 _ => {
-                    return Err(SffError::UknownColorDepth(self.col_depth));
+                    return Err(SffError::UnknownColorDepth(self.col_depth));
                 }
             }
         } else {
@@ -466,6 +601,15 @@ impl Sprite {
         Ok(self)
     }
 
+    /// Decodifica datos RLE8 (Run-Length Encoding 8) en formato PCX.
+    ///
+    /// # Argumentos
+    ///
+    /// * `rle` - Datos RLE a decodificar.
+    ///
+    /// # Retorna
+    ///
+    /// Vector de bytes decodificados.
     fn rle8_decode(&mut self, rle: Vec<u8>) -> Vec<u8> {
         if rle.is_empty() {
             return rle;
@@ -492,6 +636,15 @@ impl Sprite {
         p
     }
 
+    /// Decodifica datos RLE5 (Run-Length Encoding 5) en formato PCX.
+    ///
+    /// # Argumentos
+    ///
+    /// * `rle` - Datos RLE a decodificar.
+    ///
+    /// # Retorna
+    ///
+    /// Vector de bytes decodificados.
     fn rle5_decode(&self, rle: Vec<u8>) -> Vec<u8> {
         if rle.is_empty() {
             return rle;
@@ -535,6 +688,15 @@ impl Sprite {
         p
     }
 
+    /// Decodifica datos LZ5 (Lempel-Ziv 5) en formato PCX.
+    ///
+    /// # Argumentos
+    ///
+    /// * `rle` - Datos RLE a decodificar.
+    ///
+    /// # Retorna
+    ///
+    /// Vector de bytes decodificados.
     fn lz5_decode(&self, rle: Vec<u8>) -> Vec<u8> {
         if rle.is_empty() {
             return rle;
@@ -615,20 +777,36 @@ impl Sprite {
         p
     }
 
+    /// Establece los datos crudos del sprite.
+    ///
+    /// # Argumentos
+    ///
+    /// * `px` - Vector de datos crudos.
     fn set_raw(&mut self, px: Vec<u8>) {
         self.raw = px;
     }
 
+    /// Establece la paleta del sprite.
+    ///
+    /// # Argumentos
+    ///
+    /// * `palette` - Paleta de colores.
+    /// * `context` - Contexto de textura.
     fn set_palette(&mut self, palette: &Vec<Color>, context: &mut G2dTextureContext) {
         self.pal_temp = palette.clone();
         self.set_texture(context);
     }
 
+    /// Establece la textura del sprite.
+    ///
+    /// # Argumentos
+    ///
+    /// * `context` - Contexto de textura.
     fn set_texture(&mut self, context: &mut G2dTextureContext) {
         let mut rgba: Vec<u8> = Vec::new();
         let palette;
 
-        if !self.pal_temp.is_empty(){
+        if !self.pal_temp.is_empty() {
             palette = &self.pal_temp;
         } else {
             palette = &self.pal;
@@ -640,12 +818,7 @@ impl Sprite {
             }
         }
 
-        let img = &RgbaImage::from_raw(
-            self.size[0] as u32,
-            self.size[1] as u32,
-            rgba,
-        )
-        .unwrap();
+        let img = &RgbaImage::from_raw(self.size[0] as u32, self.size[1] as u32, rgba).unwrap();
 
         let texture = piston_window::Texture::from_image(
             context,
@@ -659,14 +832,25 @@ impl Sprite {
 }
 
 impl PaletteList {
+    /// Crea una nueva `PaletteList` vacía.
+    ///
+    /// # Retorna
+    ///
+    /// Una `PaletteList` con listas y mapas vacíos.
     fn new() -> Self {
         Self {
             palettes: Vec::new(),
             palette_map: Vec::new(),
-            pal_table: HashMap::new()
+            pal_table: HashMap::new(),
         }
     }
 
+    /// Establece la fuente de una paleta en una posición dada.
+    ///
+    /// # Argumentos
+    ///
+    /// * `i` - El índice en el mapa de paletas.
+    /// * `p` - Una referencia a un `Vec<Color>` que representa la paleta.
     fn set_source(&mut self, i: usize, p: &Vec<Color>) {
         if i < self.palette_map.len() {
             self.palette_map[i as usize] = i as i32;
@@ -687,6 +871,11 @@ impl PaletteList {
         }
     }
 
+    /// Crea una nueva paleta vacía y la agrega a la lista.
+    ///
+    /// # Retorna
+    ///
+    /// Una tupla con el índice de la nueva paleta y la paleta vacía.
     fn new_pal(&mut self) -> (usize, Vec<Color>) {
         let i = self.palettes.len();
         let p = Vec::new();
@@ -694,12 +883,33 @@ impl PaletteList {
         (i, p)
     }
 
+    /// Obtiene una referencia a la paleta en una posición dada.
+    ///
+    /// # Argumentos
+    ///
+    /// * `i` - El índice de la paleta en el mapa.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia a un `Vec<Color>` que representa la paleta.
     fn get(&self, i: usize) -> &Vec<Color> {
         return &self.palettes[self.palette_map[i] as usize];
     }
 }
 
 impl Sff {
+    /// Crea una nueva instancia de `Sff`.
+    ///
+    /// Inicializa una nueva instancia de `Sff` con un contexto gráfico proporcionado. La lista de paletas se inicializa
+    /// con valores predeterminados.
+    ///
+    /// # Argumentos
+    ///
+    /// * `context` - El contexto gráfico utilizado para renderizar los sprites.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `Sff` con valor por defectos y contexto enviado.
     pub fn new(context: G2dTextureContext) -> Self {
         let mut pal_list = PaletteList::new();
         for i in 1..MAX_PAL_NO as i16 {
@@ -716,7 +926,27 @@ impl Sff {
         }
     }
 
-    pub fn preload_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, SffError>  {
+    /// Precarga un archivo SFF para un personaje específico.
+    ///
+    /// Esta función carga y analiza el archivo SFF, configurando las paletas y los sprites. El archivo SFF debe estar ubicado
+    /// en el directorio 'src/chars/<char_name>'.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char_name` - El nombre del personaje asociado con el archivo SFF.
+    /// * `filename` - El nombre del archivo SFF.
+    /// * `char` - Un indicador booleano que especifica si el archivo es de un personaje.
+    /// * `context` - El contexto gráfico utilizado para renderizar los sprites.
+    ///
+    /// # Retorna
+    ///
+    /// Una instancia de `Sff` si se carga correctamente, o un `SffError` en caso de error.
+    pub fn preload_sff(
+        char_name: &str,
+        filename: String,
+        char: bool,
+        context: G2dTextureContext,
+    ) -> Result<Sff, SffError> {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -731,7 +961,7 @@ impl Sff {
         if !sff_path.exists() {
             return Err(SffError::NotFound(sff_path));
         }
-        
+
         match sff.header.read(sff_path.clone()) {
             Ok(_) => println!("Header was read"),
             Err(err) => return Err(err),
@@ -739,7 +969,7 @@ impl Sff {
 
         if sff.header.ver0 != 1 {
             match sff.configure_pals_v2(sff_path.clone()) {
-                Ok(_) => println!("Configure and added all the palettes"),
+                Ok(_) => println!("Configured and added all the palettes"),
                 Err(err) => return Err(err),
             };
         }
@@ -751,7 +981,27 @@ impl Sff {
         Ok(sff)
     }
 
-    pub fn load_sff(char_name: &str, filename: String, char: bool, context: G2dTextureContext) -> Result<Sff, SffError> {
+    /// Carga un archivo SFF para un personaje específico.
+    ///
+    /// Esta función carga y analiza el archivo SFF, configurando las paletas y los sprites. El archivo SFF debe estar ubicado
+    /// en el directorio 'src/chars/<char_name>'.
+    ///
+    /// # Argumentos
+    ///
+    /// * `char_name` - El nombre del personaje asociado con el archivo SFF.
+    /// * `filename` - El nombre del archivo SFF.
+    /// * `char` - Un indicador booleano que especifica si el archivo es de un personaje.
+    /// * `context` - El contexto gráfico utilizado para renderizar los sprites.
+    ///
+    /// # Retorna
+    ///
+    /// Una instancia de `Sff` si se carga correctamente, o un `SffError` en caso de error.
+    pub fn load_sff(
+        char_name: &str,
+        filename: String,
+        char: bool,
+        context: G2dTextureContext,
+    ) -> Result<Sff, SffError> {
         let mut sff = Sff::new(context);
         sff.filename = filename.clone();
         sff.name = char_name.to_string();
@@ -774,7 +1024,7 @@ impl Sff {
 
         if sff.header.ver0 != 1 {
             match sff.configure_pals_v2(sff_path.clone()) {
-                Ok(_) => println!("Configure and added all the palettes"),
+                Ok(_) => println!("Configured and added all the palettes"),
                 Err(err) => return Err(err),
             };
         }
@@ -786,6 +1036,19 @@ impl Sff {
         Ok(sff)
     }
 
+    /// Configura los sprites desde el archivo SFF.
+    ///
+    /// Esta función lee y configura los sprites desde el archivo SFF, actualizando la lista de sprites de la instancia.
+    ///
+    /// # Argumentos
+    ///
+    /// * `sff_path` - La ruta al archivo SFF.
+    /// * `char` - Un indicador booleano que especifica si el archivo es de un personaje.
+    /// * `preload` - Un indicador booleano que especifica si los sprites deben precargarse.
+    ///
+    /// # Retorna
+    ///
+    /// Un `Result` vacío indicando éxito o un `SffError` en caso de error.
     fn configure_sprite(
         &mut self,
         sff_path: PathBuf,
@@ -892,10 +1155,22 @@ impl Sff {
         Ok(())
     }
 
+    /// Obtiene el nombre del personaje asociado con el archivo SFF.
+    ///
+    /// # Retorna
+    ///
+    /// Una cadena que representa el nombre del personaje.
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
 
+    /// Establece una nueva paleta para los sprites.
+    ///
+    /// Esta función establece una nueva paleta para todos los sprites en la lista de sprites.
+    ///
+    /// # Argumentos
+    ///
+    /// * `palette_index` - El índice de la paleta a establecer.
     pub fn set_palette(&mut self, palette_index: usize) {
         let palette = self.pal_list.get(palette_index);
         for (_, sprite) in self.sprites.iter_mut() {
@@ -903,6 +1178,17 @@ impl Sff {
         }
     }
 
+    /// Configura las paletas para la versión 2 del archivo SFF.
+    ///
+    /// Esta función lee y configura las paletas desde el archivo SFF para la versión 2 del formato.
+    ///
+    /// # Argumentos
+    ///
+    /// * `sff_path` - La ruta al archivo Sff.
+    ///
+    /// # Retorna
+    ///
+    /// Un `Result` vacío indicando éxito o un `SffError` en caso de error.
     fn configure_pals_v2(&mut self, sff_path: PathBuf) -> Result<(), SffError> {
         let mut unique_pals: HashMap<[i16; 2], u16> = HashMap::new();
         let data = std::fs::read(sff_path)?;
@@ -978,6 +1264,11 @@ impl Sff {
 }
 
 impl<'a> SffHeader {
+    /// Crea un nuevo `SffHeader` con valores por defecto.
+    ///
+    /// # Retorna
+    ///
+    /// Retorna una instancia de `SffHeader` con todos los campos inicializados a cero.
     fn new() -> Self {
         Self {
             ver0: 0,
@@ -993,6 +1284,20 @@ impl<'a> SffHeader {
         }
     }
 
+    /// Lee y analiza un archivo SFF y actualiza los campos del `SffHeader`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `sff_path` - Una ruta al archivo SFF.
+    ///
+    /// # Retorna
+    ///
+    /// Retorna `Ok(())` si la lectura y el análisis fueron exitosos, o un `SffError` si hubo algún problema.
+    ///
+    /// # Errores
+    ///
+    /// Retorna `SffError::InvalidSignature` si la firma del archivo es inválida.
+    /// Retorna `SffError::UnsupportedVersion` si la versión del archivo no es compatible.
     fn read(&mut self, sff_path: PathBuf) -> Result<(), SffError> {
         let data = std::fs::read(sff_path)?;
 

@@ -3,8 +3,13 @@ use std::fs;
 use gfx_device_gl::Resources;
 use piston_window::{Flip, Glyphs, PistonWindow, Texture, TextureSettings};
 
-use crate::{chars, error::{pop_up::show_error_popup, preload_error::PreloadError}, player::character::sff::decoder::Sff};
+use crate::{
+    chars,
+    error::{pop_up::show_error_popup, preload_error::PreloadError},
+    player::character::sff::decoder::Sff,
+};
 
+/// Struct que contiene los recursos precargados para el juego, como fondos, fuentes y personajes.
 pub struct Preloads {
     backgrounds: Vec<Texture<Resources>>,
     fonts: Vec<Glyphs>,
@@ -12,6 +17,15 @@ pub struct Preloads {
 }
 
 impl Preloads {
+    /// Crea una nueva instancia de `Preloads` cargando los recursos necesarios.
+    ///
+    /// # Argumentos
+    ///
+    /// * `window` - Referencia mutable a la ventana de Piston donde se cargan los recursos.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `Preloads` con los recursos cargados, o un error si no se pudieron cargar.    
     pub fn new(window: &mut PistonWindow) -> Result<Self, PreloadError> {
         let mut fonts = Vec::new();
         let mut backgrounds = Vec::new();
@@ -96,14 +110,29 @@ impl Preloads {
         })
     }
 
+    /// Obtiene una referencia mutable a los fondos precargados.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia mutable a los fondos precargados.
     pub fn get_mut_ref_background(&self) -> &Vec<Texture<Resources>> {
         &self.backgrounds
     }
 
+    /// Obtiene una referencia a los personajes precargados.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia a los personajes precargados.
     pub fn get_ref_roster(&self) -> &Vec<Sff> {
         &self.roster
     }
 
+    /// Obtiene una referencia mutable a las fuentes precargadas.
+    ///
+    /// # Retorna
+    ///
+    /// Una referencia mutable a las fuentes precargadas.
     pub fn get_mut_ref_fonts(&mut self) -> &mut Vec<Glyphs> {
         &mut self.fonts
     }

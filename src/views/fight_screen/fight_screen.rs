@@ -10,20 +10,25 @@ use piston_window::{Context, G2d, PistonWindow};
 
 use crate::{
     player::player::Player, preloader::preloader::Preloads, views::{
-        common::Screen,
+        screen::Screen,
         screen_manager::{Event, ScreenType},
     }
 };
 
 use super::gui;
 
+/// Enumera los estados posibles de la pantalla de combate.
 #[derive(PartialEq)]
 enum State {
+    /// Estado de inicio de la pelea.
     StartFight,
+    /// Estado de combate.
     Fighting,
+    /// Estado de fin de la pelea.
     EndFight,
 }
 
+/// Representa la pantalla de combate del juego.
 pub struct FightScreen {
     players: [Player; 2],
     ticks: u16,
@@ -41,6 +46,19 @@ pub struct FightScreen {
 }
 
 impl FightScreen {
+      /// Crea una nueva instancia de `FightScreen`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `window` - La ventana de Piston para el juego.
+    /// * `event_sender` - El canal de eventos para comunicarse con el administrador de pantallas.
+    /// * `characters` - Los nombres de los personajes que participarán en la pelea.
+    /// * `palettes` - Las paletas de colores de los personajes.
+    /// * `preloads` - Los recursos precargados para el juego.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `FightScreen`.
     pub fn new(
         window: &mut PistonWindow,
         event_sender: Sender<Event>,
@@ -83,6 +101,16 @@ impl FightScreen {
 }
 
 impl Screen for FightScreen {
+    /// Crea una nueva instancia de `FightScreen`.
+    ///
+    /// # Argumentos
+    ///
+    /// * `event_sender` - El canal de eventos para comunicarse con el administrador de pantallas.
+    /// * `preloads` - Los recursos precargados para el juego.
+    ///
+    /// # Retorna
+    ///
+    /// Una nueva instancia de `FightScreen`.
     fn new(event_sender: Sender<Event>, preloads: Arc<Mutex<Preloads>>) -> Self
     where
         Self: Sized,
@@ -91,7 +119,8 @@ impl Screen for FightScreen {
         let _ = event_sender;
         todo!()
     }
-
+    
+     /// Actualiza el estado de la pantalla de combate.
     fn update(&mut self) {
         let delta_time = self.last_update.elapsed();
         self.last_update = Instant::now();
@@ -141,7 +170,7 @@ impl Screen for FightScreen {
             let p2_life = p2.get_life();
 
             if p1_life == 0 {
-                self.end_round += 1;
+                self.end_round += 2;
                 self.state = State::EndFight;
                 p1.set_lose(true);
                 if p2_life > 0 {
@@ -177,6 +206,12 @@ impl Screen for FightScreen {
         }
     }
 
+
+    /// Maneja el evento de presionar una tecla en la pantalla de combate.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha presionado.
     fn on_press(&mut self, key: Key) {
         match key {
             k if k == Key::F1 && self.state == State::Fighting => {
@@ -207,6 +242,11 @@ impl Screen for FightScreen {
         }
     }
 
+    /// Maneja el evento de soltar una tecla en la pantalla de combate.
+    ///
+    /// # Argumentos
+    ///
+    /// * `key` - La tecla que se ha soltado.
     fn on_release(&mut self, key: Key) {
         match key {
             _ if self.state == State::Fighting => {
@@ -220,6 +260,13 @@ impl Screen for FightScreen {
         }
     }
 
+    /// Dibuja el contenido de la pantalla de combate.
+    ///
+    /// # Argumentos
+    ///
+    /// * `c` - El contexto de dibujo.
+    /// * `g` - El contexto de gráficos.
+    /// * `device` - El dispositivo de dibujo.
     fn draw(&mut self, c: Context, g: &mut G2d, device: &mut Device) {
         clear([1.0; 4], g);
         let mut preloads = self.preloads.lock().unwrap();

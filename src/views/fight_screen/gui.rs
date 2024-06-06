@@ -13,6 +13,13 @@ const TIMER_CENTER_Y: f64 = TIMER_RADIUS;
 const TEXT_SIZE: u32 = 32;
 const FPS_TEXT_SIZE: u32 = 15;
 
+/// Dibuja la barra de poder para un jugador.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `power`: El poder del jugador en porcentaje (0.0 a 100.0).
+/// - `is_player_one`: Indica si el jugador es el jugador uno.
 pub fn draw_power_bar(c: Context, g: &mut G2d, power: f64, is_player_one: bool) {
     let power_bar_width = (power / 100.0) * HEALTH_BAR_MAX_WIDTH / 2.0;
     let mut x_pos = PADDING;
@@ -50,7 +57,13 @@ pub fn draw_power_bar(c: Context, g: &mut G2d, power: f64, is_player_one: bool) 
     );
 }
 
-
+/// Dibuja la barra de salud para un jugador.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `life`: La salud del jugador en porcentaje (0.0 a 100.0).
+/// - `is_player_one`: Indica si el jugador es el jugador uno.
 pub fn draw_health_bar(c: Context, g: &mut G2d, life: f64, is_player_one: bool) {
     let health_bar_width = (life / 100.0) * HEALTH_BAR_MAX_WIDTH;
     let mut x_pos = PADDING;
@@ -88,6 +101,14 @@ pub fn draw_health_bar(c: Context, g: &mut G2d, life: f64, is_player_one: bool) 
     );
 }
 
+/// Dibuja una cuenta regresiva.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `timer`: El valor del temporizador.
 pub fn draw_countdown(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, timer: u32) {
     let progress = timer as f64 / 3.0;
     let end_angle = 2.0 * PI * progress;
@@ -142,6 +163,14 @@ pub fn draw_countdown(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja el temporizador del juego.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `timer`: El valor del temporizador.
 pub fn draw_timer(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, timer: u32) {
     let progress = timer as f64 / 100.0;
     let end_angle = 2.0 * PI * progress;
@@ -196,6 +225,14 @@ pub fn draw_timer(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Gly
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja el contador de FPS.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `fps`: El valor de los FPS.
 pub fn draw_fps(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, fps: f64) {
     let text = format!("FPS({})", fps);
 
@@ -214,6 +251,14 @@ pub fn draw_fps(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyph
     glyphs.factory.encoder.flush(device);
 }
 
+/// Dibuja el mensaje de fin de ronda.
+///
+/// # Parámetros
+/// - `c`: El contexto de gráficos.
+/// - `g`: La referencia mutable al gráfico 2D.
+/// - `device`: El dispositivo gráfico.
+/// - `glyphs`: Las fuentes para el texto.
+/// - `winner`: El número del jugador ganador.
 pub fn end_round(c: Context, g: &mut G2d, device: &mut Device, glyphs: &mut Glyphs, winner: u8) {
     let mut text = "Who won?";
     match winner {

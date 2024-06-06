@@ -2,9 +2,22 @@ use crate::chars::Character;
 
 use super::{constants::constants::*, CharData, State};
 
+/// Descencadena una acción en base a los datos del personaje.
+///
+/// Los datos que tienen repercusión:
+///
+/// - Si el personaje tiene control -> Se gestiona su movimiento.
+/// - Si el personaje no está en el estado `-1` (defecto) -> Se gestiona el estado especial.
+/// - Si el personaje ha perdido o ganado -> Se le asigna un estado y se gestiona.
+/// - Si no está haciendo ninguna acción -> Se gira el personaje si es pertinente.
+/// - Si está haciendo una acción -> Se le asigna un estado y se gestiona.
+///
+/// # Argumentos
+///
+/// * `char` - Una referencia mutable a la estructura `CharData` que contiene los datos del personaje.
 pub fn trigger(char: &mut CharData) {
     if char.ctrl {
-        direction_hanlder(char);
+        direction_handler(char);
     }
     if char.state_no != -1 {
         call_state(char);
@@ -13,10 +26,12 @@ pub fn trigger(char: &mut CharData) {
     if char.lose {
         char.state_no = 170;
         call_state(char);
+        return;
     }
     if char.win {
         char.state_no = 181;
         call_state(char);
+        return;
     }
     if char.action == "" {
         if (char.distance > 0.0) != char.current_flip {
@@ -32,13 +47,15 @@ pub fn trigger(char: &mut CharData) {
         return;
     }
 
+    // Fast Kung Fu Knee
     if char.action == "FF_ab" && char.power >= 330 {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1070;
         }
         return;
     }
 
+    // Smash Kung Fu Upper
     if char.action == "SmashKFUpper" && char.state != State::A && char.power >= 1000 {
         if char.ctrl && char.state != State::A {
             char.state_no = 3050;
@@ -46,6 +63,7 @@ pub fn trigger(char: &mut CharData) {
         return;
     }
 
+    // Triple Kung Fu Palm
     if char.action == "TripleKFPalm" && char.power >= 1000 {
         if char.state == State::S && char.ctrl {
             char.state_no = 3000;
@@ -53,85 +71,95 @@ pub fn trigger(char: &mut CharData) {
         return;
     }
 
+    // Light Kung Fu Knee
     if char.action == "FF_a" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1050;
         }
         return;
     }
 
+    // Strong Kung Fu Knee
     if char.action == "FF_b" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1060;
         }
         return;
     }
 
+    // Fast Kung Fu Palm
     if char.action == "QCF_xy" && char.power >= 330 {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1020;
         }
         return;
     }
 
+    // Light Kung Fu Palm
     if char.action == "QCF_x" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1000;
         }
         return;
     }
 
+    // Strong Kung Fu Palm
     if char.action == "QCF_y" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1010;
         }
         return;
     }
 
+    // Fast Kung Fu Upper
     if char.action == "upper_xy" && char.power >= 330 {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1120;
         }
         return;
     }
 
+    // Light Kung Fu Upper
     if char.action == "upper_x" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1100;
         }
         return;
     }
 
+    // Strong Kung Fu Upper
     if char.action == "upper_y" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1110;
         }
         return;
     }
 
+    // Fast Kung Fu Blow
     if char.action == "QCB_xy" && char.power >= 330 {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1220;
         }
         return;
     }
 
+    // Light Kung Fu Blow
     if char.action == "QCB_x" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1200;
         }
         return;
     }
 
+    // Strong Kung Fu Blow
     if char.action == "QCB_y" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1210;
         }
         return;
     }
 
-    // IMPROVE -----
-    // Stand
+    // Blocking
     if char.action == "blocking" {
         if !char.ctrl {
             return;
@@ -149,22 +177,25 @@ pub fn trigger(char: &mut CharData) {
         return;
     }
 
+    // Far Kung Fu Zankou
     if char.action == "QCF_ab" && char.power >= 330 {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1420;
         }
         return;
     }
 
+    // Light Kung Fu Zankou
     if char.action == "QCF_a" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1400;
         }
         return;
     }
 
+    // Strong Kung Fu Zankou
     if char.action == "QCF_b" {
-        if combo_condition_check(char) {
+        if char.state != State::A && char.ctrl {
             char.state_no = 1410;
         }
         return;
@@ -207,7 +238,7 @@ pub fn trigger(char: &mut CharData) {
         return;
     }
 
-    // Standing Strong Kick
+    // Stand Strong Kick
     if char.action == "b" {
         if char.state == State::S && char.ctrl {
             char.state_no = 240;
@@ -227,28 +258,28 @@ pub fn trigger(char: &mut CharData) {
     }
 }
 
-fn combo_condition_check(char: &mut CharData) -> bool {
-    (char.state != State::A && char.ctrl)
-        || (((char.state_no >= 200 && char.state_no <= 299)
-            || (char.state_no >= 400 && char.state_no <= 499))
-            && char.state_no != 440
-            && char.move_contact)
-        || (char.state_no == 1310 || char.state_no == 1330)
-}
 
-fn direction_hanlder(char: &mut CharData) {
+/// Comprueba qué dirección está usando el personaje y actualiza diversos datos.
+///
+/// # Argumentos
+///
+/// * `char` - Una referencia mutable a la estructura `CharData` que contiene los datos del personaje.
+fn direction_handler(char: &mut CharData) {
     match char.direction {
+        // Run Forward
         66 => {
             if char.state == State::S {
                 char.run = true;
             }
         }
+        // Hop Backwards
         44 => {
             char.run = false;
             if char.state == State::S {
                 char.state_no = 105;
             }
         }
+        // Jump Up
         9 | 7 | 8 => {
             char.run = false;
             if char.state == State::A && char.double_jump && char.jumps < MAXIMUM_NUMBER_JUMPS {
@@ -264,6 +295,7 @@ fn direction_hanlder(char: &mut CharData) {
             }
             char.double_jump = false;
         }
+        // Forward
         6 => {
             if char.state == State::A {
                 char.double_jump = true;
@@ -285,6 +317,7 @@ fn direction_hanlder(char: &mut CharData) {
                 }
             }
         }
+        // Backward
         4 => {
             char.run = false;
             if char.state == State::A {
@@ -302,6 +335,7 @@ fn direction_hanlder(char: &mut CharData) {
                 char.set_vel_x(WALK_BACK);
             }
         }
+        // Neutral
         5 => {
             char.run = false;
             if char.state == State::A {
@@ -319,6 +353,7 @@ fn direction_hanlder(char: &mut CharData) {
                 char.anim = 0;
             }
         }
+        // Crouch
         1 | 2 | 3 => {
             char.run = false;
             if char.state == State::A {
@@ -336,12 +371,11 @@ fn direction_hanlder(char: &mut CharData) {
                 char.anim_time = -1;
             }
         }
-        _ => {
-            //char.anim = 0;
-        }
+        _ => {}
     }
 }
 
+/// Restaura diversos datos del personaje a su estado por defecto.
 fn default_end_action(char: &mut CharData) {
     char.flip_x = false;
     char.state_no = -1;
@@ -352,6 +386,13 @@ fn default_end_action(char: &mut CharData) {
     trigger(char);
 }
 
+/// Maneja la situación cuando un personaje golpea a otro, actualizando los datos de ambos. </br>
+/// Las condiciones y resultados:
+/// - El objetivo está en el suelo -> nada.
+/// - El objetivo hizo un "parry" -> nada.
+/// - El objetivo se defendió -> Se le asigna al objetivo un estado entre 1300 - 1350.
+/// - El objetvio no se defendió -> Se le asgina al objetivo un estado superario al 5000.
+/// - En base con que estado golpeó el personaje, tanto el personaje y objetivo tienen diversos comportamiento y animaciones.
 pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
     if target.get_state() == &State::L {
         return;
@@ -364,7 +405,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
     }
     let mut state_no = 5000;
     let mut low_to_high = 0;
-    let mut target_blocking = false;
+    let target_blocking;
     target.set_def(false);
     if (target.get_distance() > 0.0) != target.get_flip() {
         target.set_current_flip(target.get_distance() > 0.0);
@@ -389,14 +430,14 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             state_no += 50;
         }
     } else {
-    }
-    if !target_blocking {
+        target_blocking = false;
         if target_state == &State::C {
             low_to_high = 10;
             state_no += 20;
         }
     }
     match char.state_no {
+        // Stand Light Punch
         200 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -418,6 +459,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.set_vel_x(-2.0);
             target.set_state_no(state_no);
         }
+        // Stand Strong Punch
         210 => {
             if target_state == &State::A {
                 // Original 2.5
@@ -434,6 +476,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-57);
             target.set_state_no(state_no + 1);
         }
+        // Stand Light Kick
         230 => {
             if target_state == &State::A {
                 // Original 2.5
@@ -450,6 +493,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-26);
             target.set_state_no(state_no + 11 - low_to_high);
         }
+        // Stand Strong Kick
         240 => {
             if target_state == &State::A {
                 // Original 2.2
@@ -466,6 +510,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-63);
             target.set_state_no(state_no + 11 - low_to_high);
         }
+        // Crouch Light Punch
         400 => {
             if target_state == &State::A {
                 // Original -1.5
@@ -482,6 +527,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-23);
             target.set_state_no(state_no + 10 - low_to_high);
         }
+        // Crouch Strong Punch
         410 => {
             if target_state == &State::A {
                 // Original -3
@@ -498,6 +544,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-37);
             target.set_state_no(state_no + 11 - low_to_high);
         }
+        // Crouch Light Kick
         430 => {
             if target_state == &State::A {
                 // Original 2
@@ -514,6 +561,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-28);
             target.set_state_no(state_no + 10 - low_to_high);
         }
+        // Crouch Strong Kick
         440 => {
             if target_blocking {
                 target.set_def(true);
@@ -523,6 +571,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-72);
             target.set_state_no(state_no + 70 - low_to_high * 2);
         }
+        // Jump Light Punch
         600 => {
             if target_state == &State::A {
                 target.set_vel_x(-1.3);
@@ -539,6 +588,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-20);
             target.set_state_no(state_no);
         }
+        // Jumpo Strong Punch
         610 => {
             if target_state == &State::A {
                 // Original 3
@@ -556,6 +606,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-72);
             target.set_state_no(state_no + 1);
         }
+        // Jump Light Kick
         630 => {
             if target_state == &State::A {
                 //Orignal 2
@@ -573,6 +624,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-26);
             target.set_state_no(state_no);
         }
+        // Jump Strong Kick
         640 => {
             if target_state == &State::A {
                 // Original 3
@@ -590,6 +642,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-70);
             target.set_state_no(state_no + 1);
         }
+        // Throw
         800 => {
             char.add_pos_x(-30.0);
             target.set_x(char.x + if char.is_flipped() { -30.0 } else { 30.0 });
@@ -597,6 +650,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-78);
             target.set_state_no(820);
         }
+        // Kung Fu Palm
         1000 => {
             let char_distance = char.distance.abs();
             if target_state == &State::A {
@@ -634,6 +688,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             }
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Strong Kung Fu Palm
         1010 => {
             let char_distance = char.distance.abs();
             if target_state == &State::A {
@@ -671,6 +726,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             }
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Fast Kung Fu Palm
         1020 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -696,6 +752,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-95);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Kung Fu Knee
         1050 => {
             if target_blocking {
                 // Original 7
@@ -713,11 +770,11 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-80);
             target.set_state_no(state_no + 11);
         }
+        //  Kung Fu Knee Kick
         1055 => {
             if target_blocking {
                 if target_state == &State::A {
                     // Orginal -4
-                    target.set_vel_y(-2.0);
                     target.set_vel_y(-4.5);
                 } else {
                     // Original 8
@@ -728,16 +785,17 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 return;
             }
             if target_state == &State::A {
-                //Orignal 6
-                target.set_vel_x(-3.0);
-            } else {
                 // Original -4, -5
                 target.add_vel_x(-2.0);
                 target.add_vel_y(-1.5);
+            } else {
+                //Orignal 6
+                target.set_vel_x(-3.0);
             }
             target.add_life(-35);
             target.set_state_no(state_no + 1);
         }
+        // Strong Kung Fu Knee
         1060 => {
             if target_blocking {
                 // -7
@@ -755,6 +813,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-90);
             target.set_state_no(state_no + 11);
         }
+        // Fast Kung Fu Knee
         1070 => {
             if target_blocking {
                 // Original 7
@@ -770,6 +829,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-35);
             target.set_state_no(state_no + 11);
         }
+        // Fast Kung Fu Knee Jump
         1071 => {
             if target_blocking {
                 // Original 7
@@ -787,6 +847,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-68);
             target.set_state_no(state_no + 11);
         }
+        // Fast Kung Fu Knee Kick
         1075 => {
             if target_state == &State::A {
                 // Original -4, -6
@@ -805,6 +866,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-42);
             target.set_state_no(state_no + 1);
         }
+        // Light Kung Fu Upper
         1100 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -844,6 +906,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 target.set_state_no(state_no + 51 - low_to_high * 2);
             }
         }
+        // Strong Kung Fu Upper
         1110 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -884,6 +947,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 target.set_state_no(state_no + 51 - low_to_high * 2);
             }
         }
+        // Fast Kung Fu Upper
         1120 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -922,6 +986,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 target.set_state_no(state_no + 51 - low_to_high * 2);
             }
         }
+        // Light Kung Fu Blow
         1200 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -948,6 +1013,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-100);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Strong Kung Fu Blow
         1210 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -973,6 +1039,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-125);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Fast Kung Fu Blow
         1220 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -1000,6 +1067,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-125);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Light Kung FU Zankou
         1400 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -1027,6 +1095,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-100);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Strong Kung Fu Zankou
         1410 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -1054,6 +1123,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
             target.add_life(-100);
             target.set_state_no(state_no + 12 - low_to_high);
         }
+        // Far Kung Fu Zankou
         1420 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -1095,6 +1165,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 target.set_fall(true);
             }
         }
+        // Tiple Kung Fu Palm
         3000 => {
             if char.anim_elem == 5 || char.anim_elem == 13 {
                 if target_blocking {
@@ -1152,6 +1223,7 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
                 target.set_state_no(state_no + 12 - low_to_high);
             }
         }
+        // Smash Kung Fu Upper
         3050 => {
             if target_blocking {
                 if target_state == &State::A {
@@ -1178,9 +1250,13 @@ pub fn hit_handler(char: &mut CharData, target: &mut dyn Character) {
     }
 }
 
-// TODO: scalar product using screen
+/// En base al estado del personaje se actualiza sus datos acorde al mismo. </br>
+/// Comportamiento genérico:
+/// - Primero comprueba si el estado es nuevo y le asigna un valor inicial a ciertos datos (animación, control, estado...).
+/// - Seguidamente según en que punto del estado está (definido normalmente por la posición y los frames), se actualizan los datos.
 fn call_state(char: &mut CharData) {
     match char.state_no {
+        // Standing
         5 => {
             if char.anim != 5 {
                 char.anim = 5;
@@ -1194,6 +1270,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Forward
         6 => {
             if char.anim != 6 {
                 char.anim = 6;
@@ -1207,6 +1284,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch to Stand
         12 => {
             if char.anim != 12 {
                 char.anim = 12;
@@ -1217,6 +1295,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char)
             }
         }
+        // Stand to Crouch
         10 => {
             if char.anim != 10 {
                 char.anim = 10;
@@ -1229,6 +1308,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char)
             }
         }
+        // Jump Start
         40 => {
             if char.anim != 40 {
                 char.anim = 40;
@@ -1249,6 +1329,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Jumping
         50 => {
             char.vel_y += 0.45;
             if char.anim != 41 && char.anim != 42 && char.anim != 43 {
@@ -1282,6 +1363,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Jump Landing
         52 => {
             if char.anim != 47 {
                 char.anim = 47;
@@ -1295,6 +1377,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Hop Backwards
         105 => {
             char.vel_y += 0.45;
             if char.anim != 105 {
@@ -1323,6 +1406,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 106;
             }
         }
+        // Jump Landing (from hop)
         106 => {
             if char.anim != 47 {
                 char.state = State::S;
@@ -1337,6 +1421,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Lose
         170 => {
             if char.anim != 170 {
                 char.set_vel_x(0.0);
@@ -1346,6 +1431,7 @@ fn call_state(char: &mut CharData) {
                 char.ctrl = false;
             }
         }
+        // Win
         181 => {
             if char.anim != 181 {
                 char.set_vel_x(0.0);
@@ -1355,6 +1441,7 @@ fn call_state(char: &mut CharData) {
                 char.ctrl = false;
             }
         }
+        // Jump Strong Kick
         640 => {
             char.vel_y += 0.45;
             if char.ctrl && char.action == "a" {
@@ -1372,6 +1459,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Jump Light Kick
         630 => {
             char.vel_y += 0.45;
             if char.ctrl && char.action == "b" {
@@ -1389,6 +1477,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Jump Strong Punch
         610 => {
             char.vel_y += 0.45;
             if char.ctrl && char.action == "y" {
@@ -1406,6 +1495,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Jump Light Punch
         600 => {
             char.vel_y += 0.45;
             if char.ctrl && char.action == "x" {
@@ -1427,6 +1517,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Crouch Strong Kick
         440 => {
             if char.anim != 440 {
                 char.attack = State::C;
@@ -1440,6 +1531,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Strong Punch
         410 => {
             if char.anim != 410 {
                 char.attack = State::C;
@@ -1453,6 +1545,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Light Kick
         430 => {
             if char.anim != 430 {
                 char.attack = State::C;
@@ -1466,6 +1559,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Light Punch
         400 => {
             if char.anim != 400 {
                 char.attack = State::C;
@@ -1482,6 +1576,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Stand Strong Kick
         240 => {
             if char.anim != 240 {
                 char.attack = State::S;
@@ -1501,6 +1596,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Stand Light Kick
         230 => {
             if char.anim != 230 {
                 char.attack = State::S;
@@ -1516,6 +1612,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Stand Strong Punch
         210 => {
             if char.anim != 210 {
                 char.attack = State::S;
@@ -1531,7 +1628,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
-
+        // Stand Light Punch
         200 => {
             if char.anim != 200 {
                 char.attack = State::S;
@@ -1547,6 +1644,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Taunt
         195 => {
             if char.anim != 195 {
                 char.state = State::S;
@@ -1560,6 +1658,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Attemp Throw
         800 => {
             if char.anim != 800 {
                 char.anim = 800;
@@ -1574,6 +1673,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Throw Success
         810 => {
             if char.anim != 810 {
                 char.add_power(40);
@@ -1586,6 +1686,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Throw receiveddd
         820 => {
             if char.anim_elem > 8 {
                 char.vel_y += 0.45;
@@ -1656,6 +1757,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5050;
             }
         }
+        // Light Kung Fu Knee Move
         1050 => {
             if char.anim != 1050 {
                 char.attack = State::S;
@@ -1679,6 +1781,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1051
             }
         }
+        // Light Kung Fu Knee Jump
         1051 => {
             char.vel_y += 0.45;
             if char.anim != 1051 {
@@ -1701,6 +1804,7 @@ fn call_state(char: &mut CharData) {
             }
         }
 
+        // Fast Kung Fu Palm
         1020 => {
             if char.anim != 1020 {
                 char.state = State::S;
@@ -1729,6 +1833,8 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+
+        // Light Kung Fu Palm
         1000 => {
             if char.anim != 1000 {
                 char.attack = State::S;
@@ -1760,6 +1866,8 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+
+        // Strong Kung Fu Palm
         1010 => {
             if char.anim != 1010 {
                 char.attack = State::S;
@@ -1788,6 +1896,8 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+
+        // Light Kung Fu Knee Land
         1052 => {
             if char.anim != 1052 {
                 char.anim = 1052;
@@ -1807,6 +1917,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Fast Kung Fu Knee Kick
         1075 => {
             char.vel_y += 0.45;
             if char.anim != 1055 {
@@ -1827,6 +1938,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1052;
             }
         }
+        // Light Kung Fu Knee Kick
         1055 => {
             char.vel_y += 0.45;
             if char.anim != 1055 {
@@ -1844,6 +1956,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1056;
             }
         }
+        // Light Kung Fu Knee Kick Land
         1056 => {
             if char.anim != 1056 {
                 char.anim = 1056;
@@ -1859,6 +1972,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Strong Kung Fu Knee Jump
         1061 => {
             char.vel_y += 0.45;
             if char.anim != 1061 {
@@ -1876,6 +1990,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1052;
             }
         }
+        // Strong Kung Fu Knee Move
         1060 => {
             if char.anim != 1060 {
                 char.ctrl = false;
@@ -1899,6 +2014,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1061;
             }
         }
+        // Fast Fung Fu knee Jump
         1071 => {
             if char.anim != 1071 {
                 char.anim = 1071;
@@ -1924,7 +2040,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1052;
             }
         }
-
+        // Fast Kung Fu Knee Move
         1070 => {
             if char.anim != 1070 {
                 char.anim = 1070;
@@ -1946,6 +2062,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1071;
             }
         }
+        // Light Kung Fu Upper
         1100 => {
             if char.anim != 1100 {
                 char.anim = 1100;
@@ -1961,6 +2078,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Strong Kung Fu Upper
         1110 => {
             if char.anim != 1110 {
                 char.state = State::S;
@@ -1976,6 +2094,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Fast Kung Fu Upper
         1120 => {
             if char.anim != 1120 {
                 char.state = State::S;
@@ -1991,6 +2110,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Light Kung Fu Blow
         1200 => {
             if char.anim != 1200 {
                 char.state = State::S;
@@ -2006,6 +2126,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Strong Kung Fu Blow
         1210 => {
             if char.anim != 1210 {
                 char.state = State::S;
@@ -2021,6 +2142,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Fast Kung Fu Blow
         1220 => {
             if char.anim != 1220 {
                 char.state = State::S;
@@ -2036,7 +2158,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
-        // Blocking Stuff
+        // Blocking attemp
         1300 => {
             if char.anim != 1300 {
                 char.state = State::S;
@@ -2050,6 +2172,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Blocking Hich Success
         1310 => {
             if char.anim != 1310 {
                 char.state = State::S;
@@ -2061,6 +2184,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Blocking Low Attemp
         1320 => {
             if char.anim != 1320 {
                 char.state = State::C;
@@ -2074,6 +2198,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Blocking Low Success
         1330 => {
             if char.anim != 1330 {
                 char.state = State::C;
@@ -2085,6 +2210,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Blocking Air Attemp
         1340 => {
             char.vel_y += 0.45;
             if char.anim != 1340 {
@@ -2100,6 +2226,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 1351;
             }
         }
+        // Blocking Air Success
         1350 => {
             char.vel_y += 0.45;
             if char.anim != 1350 {
@@ -2112,6 +2239,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Jump Land From Action
         1351 => {
             if char.anim != 47 {
                 char.state = State::S;
@@ -2129,6 +2257,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Light Kung Fu Zankou
         1400 => {
             if char.anim != 1400 {
                 char.state = State::S;
@@ -2156,6 +2285,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Strong Kung Fu Zankou
         1410 => {
             if char.anim != 1410 {
                 char.state = State::S;
@@ -2183,6 +2313,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Fast Kung Fu Zankou
         1420 => {
             if char.anim != 1420 {
                 char.state = State::S;
@@ -2214,6 +2345,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Triple Kung Fu Palm
         3000 => {
             if char.anim != 3000 {
                 char.anim = 3000;
@@ -2248,6 +2380,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Smash Kung Fu Upper
         3050 => {
             if char.anim != 3050 {
                 char.anim = 3050;
@@ -2261,6 +2394,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Smash Kung Fu Upper Success
         3051 => {
             if char.anim != 3051 {
                 char.anim = 3051;
@@ -2270,6 +2404,8 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Receive Hits
+        // High Light
         5000 => {
             if char.anim != 5000 {
                 char.anim = 5000;
@@ -2284,6 +2420,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover High Light
         5005 => {
             if char.anim != 5005 {
                 char.anim = 5005;
@@ -2293,6 +2430,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // High Medium
         5001 => {
             if char.anim != 5001 {
                 char.anim = 5001;
@@ -2307,6 +2445,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover High Medium
         5006 => {
             if char.anim != 5006 {
                 char.anim = 5006;
@@ -2316,6 +2455,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // High Hard
         5002 => {
             if char.anim != 5002 {
                 char.anim = 5002;
@@ -2330,6 +2470,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover High Hard
         5007 => {
             if char.anim != 5007 {
                 char.anim = 5007;
@@ -2339,6 +2480,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Low Light
         5010 => {
             if char.anim != 5010 {
                 char.anim = 5010;
@@ -2353,6 +2495,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover Low Light
         5015 => {
             if char.anim != 5015 {
                 char.anim = 5015;
@@ -2362,6 +2505,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Low Medium
         5011 => {
             if char.anim != 5011 {
                 char.anim = 5011;
@@ -2376,6 +2520,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover Low Medium
         5016 => {
             if char.anim != 5016 {
                 char.anim = 5016;
@@ -2385,6 +2530,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Low Hard
         5012 => {
             if char.anim != 5012 {
                 char.anim = 5012;
@@ -2399,6 +2545,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Recover Low Hard
         5017 => {
             if char.anim != 5017 {
                 char.anim = 5017;
@@ -2408,6 +2555,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Light
         5020 => {
             if char.anim != 5020 {
                 char.anim = 5020;
@@ -2419,6 +2567,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5025;
             }
         }
+        // Recover Crouch Light
         5025 => {
             if char.anim != 5025 {
                 char.anim = 5025;
@@ -2428,6 +2577,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Medium
         5021 => {
             if char.anim != 5021 {
                 char.anim = 5021;
@@ -2439,6 +2589,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5026;
             }
         }
+        // Recover Crouch Medium
         5026 => {
             if char.anim != 5026 {
                 char.anim = 5026;
@@ -2448,6 +2599,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Crouch Hard
         5022 => {
             if char.anim != 5022 {
                 char.anim = 5022;
@@ -2459,6 +2611,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5027;
             }
         }
+        // Recover Crouch Hard
         5027 => {
             if char.anim != 5027 {
                 char.anim = 5027;
@@ -2468,6 +2621,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Air Hitted
         5030 => {
             char.vel_y += 0.45;
             if char.anim != 5030 {
@@ -2478,6 +2632,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5035;
             }
         }
+        // Air Transition
         5035 => {
             char.vel_y += 0.45;
             if char.anim != 5035 {
@@ -2500,6 +2655,7 @@ fn call_state(char: &mut CharData) {
                 }
             }
         }
+        // Air Recover
         5040 => {
             char.vel_y += 0.45;
             if char.anim != 5040 {
@@ -2510,6 +2666,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 52;
             }
         }
+        // Air Fall Down
         5050 => {
             char.vel_y += 0.45;
             if char.anim != 5050 {
@@ -2521,6 +2678,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5100;
             }
         }
+        // Air Fall Up
         5051 => {
             char.vel_y += 0.45;
             if char.anim != 5051 {
@@ -2532,6 +2690,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5061;
             }
         }
+        // Air Fall Up Down
         5061 => {
             char.vel_y += 0.45;
             if char.anim != 5061 {
@@ -2543,6 +2702,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5101;
             }
         }
+        // Tripped
         5070 => {
             char.vel_y += 0.45;
             if char.anim != 5070 {
@@ -2561,6 +2721,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5110;
             }
         }
+        // Hit Ground Down
         5100 => {
             if char.anim != 5100 {
                 char.set_vel_y(0.0);
@@ -2573,6 +2734,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5160
             }
         }
+        // Hit Ground Up
         5101 => {
             char.vel_y += 0.4;
             if char.anim != 5101 {
@@ -2583,6 +2745,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5160;
             }
         }
+        // Lie
         5110 => {
             if char.anim != 5110 {
                 char.set_vel_x(0.0);
@@ -2596,6 +2759,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5120
             }
         }
+        // Stand From Lie
         5120 => {
             if char.anim != 5120 {
                 char.anim = 5120;
@@ -2606,6 +2770,7 @@ fn call_state(char: &mut CharData) {
                 default_end_action(char);
             }
         }
+        // Bounce
         5160 => {
             char.vel_y += 0.4;
             if char.anim != 5160 {
@@ -2618,6 +2783,7 @@ fn call_state(char: &mut CharData) {
                 char.state_no = 5170;
             }
         }
+        // Hit Ground Bounce
         5170 => {
             if char.anim != 5170 {
                 char.set_vel_y(0.0);
