@@ -1,52 +1,28 @@
-//! Este módulo principal configura y ejecuta la ventana principal del juego.
-//! 
-//! El juego utiliza la biblioteca `piston_window` para manejar la ventana y
-//! los eventos del juego. La lógica del juego se organiza a través de
-//! diferentes módulos y el `ScreenManager` se encarga de gestionar las
-//! diferentes pantallas del juego.
-mod player;
-mod chars;
-mod views;
-mod preloader;
-pub mod error;
+
 
 extern crate image;
 extern crate piston_window;
 
 use piston_window::*;
-use views::screen_manager::{ScreenManager, ScreenType};
 use winit::window::WindowButtons;
 
 /// Máximo de frames por segundo (FPS) para la ventana del juego.
 const FPS: u64 = 60;
 
-/// Enumaración de teclas de comandos que se pueden pulsar
-#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
-pub enum CK {
-    DB,
-    D,
-    DF,
-    B,
-    F,
-    UB,
-    U,
-    UF,
-    LP,
-    MP,
-    HP,
-    LK,
-    MK,
-    HK,
-    Start,
+
+use rust_fg::views::screen_manager::{ScreenManager, ScreenType};
+
+fn new_window(title: &str, size: [f64;2]) -> PistonWindow{
+    WindowSettings::new(title, size)
+        .resizable(false)
+        .samples(8)
+        .build()
+        .unwrap()
 }
 
 /// Punto de entrada de la aplicación.
 fn main() {
-    let mut window: PistonWindow = WindowSettings::new("Rust FG", [512; 2])
-        .resizable(false)
-        .samples(8)
-        .build()
-        .unwrap();
+    let mut window: PistonWindow = new_window("Rust_FG", [512.0;2]);
 
     let conf_window: &winit::window::Window = &window.window.window;
     conf_window.set_enabled_buttons(WindowButtons::CLOSE | WindowButtons::MINIMIZE);
