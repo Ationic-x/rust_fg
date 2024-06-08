@@ -7,6 +7,7 @@ use std::error::Error;
 pub enum CmdError {
     /// Error que indica que no se pudo encontrar el archivo de comando especificado.
     NotFound(String),
+    Malformed(usize),
 }
 
 impl fmt::Display for CmdError {
@@ -22,6 +23,7 @@ impl fmt::Display for CmdError {
     /// Un resultado que indica si el formato fue exitoso o no.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            CmdError::Malformed(line) => write!(f, "Cmd command malformed on line {:?}", line),
             CmdError::NotFound(file) =>  write!(f, "Cmd file not found: {}", file),
         }
     }

@@ -271,7 +271,7 @@ impl CommandNode {
 ///
 /// Un `io::Result` que contiene un vector de instancias de `Command` si el archivo se lee y analiza correctamente,
 /// de lo contrario, un `io::Error` indicando el problema encontrado.
-fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
+fn read_command_file(lines: &Vec<&str>) -> Result<Vec<Command>, CmdError> {
     let mut commands: Vec<Command> = Vec::new();
 
     let mut i = 0;
@@ -307,17 +307,20 @@ fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
                 }
 
                 let parts: Vec<&str> = line.split('=').collect();
-                parse_command(
+                match parse_command(
                     parts[1].split(',').map(|e| e.trim()).collect(),
                     commands.len() - 1,
                     &mut commands,
                     &time,
-                );
+                ) {
+                 Ok(_) => {},
+                 Err(_) => return Err(CmdError::Malformed(i)),
+                };
             }
             _ => {}
         }
     }
-    commands
+    Ok(commands)
 }
 
 /// Analiza una secuencia de comandos y completa el comando correspondiente con los detalles analizados.
@@ -332,7 +335,7 @@ fn read_command_file(lines: &Vec<&str>) -> Vec<Command> {
 /// * `pos` - La posición en el vector de comandos donde deben completarse los detalles del comando.
 /// * `commands` - Una referencia mutable a un vector de instancias de `Command`.
 /// * `time` - Una referencia a un vector que contiene la información de temporización para el comando.
-fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, time: &Vec<u16>) {
+fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, time: &Vec<u16>) -> Result<(), ()> {
     let mut hold_element = String::new();
     let mut hold = false;
 
@@ -402,7 +405,7 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
                                             offset,
                                             commands,
                                             &time,
-                                        );
+                                        )?;
                                     }
                                 }
                             }
@@ -418,7 +421,7 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
                                     pos,
                                     commands,
                                     &time,
-                                );
+                                )?;
                             }
 
                             _ => {}
@@ -427,7 +430,7 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
                     _ => {}
                 }
             }
-            return;
+            return Ok(());
         }
         if modified_element.contains('>') {
             modified_element = modified_element.replace('>', "");
@@ -463,6 +466,7 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
 
         if let Some(command) = commands.get_mut(pos) {
             let time_value;
+            let size = inputs.len();
 
             if command.cmd_elements.is_empty() {
                 time_value = 0;
@@ -475,10 +479,14 @@ fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, t
                 sensitive,
                 &directions_and_actions,
             )) {
+                if cmd_element.elements.len() < size {
+                    return Err(());
+                }
                 command.cmd_elements.push(cmd_element);
             }
         }
     }
+    Ok(())
 }
 
 /// Crea un árbol de comandos para un personaje dado leyendo el archivo de comandos correspondiente.
@@ -502,7 +510,7 @@ pub fn create_command_tree(cmd: &str) -> Result<CommandNode, CmdError> {
     let lines: Vec<&str> = content.lines().map(|line| line.trim()).collect();
     let mut tree = CommandNode::new();
 
-    let commands = read_command_file(&lines);
+    let commands = read_command_file(&lines)?;
 
     for command in &commands {
         tree.insert(command, 0);
@@ -577,7 +585,7 @@ mod tests {
             "command = F, MP+LP",
             "time = 15",
         ];
-        let commands = read_command_file(&lines);
+        let commands = read_command_file(&lines).unwrap();
 
         assert_eq!(commands.len(), 1);
         assert_eq!(commands[0].name, "Prueba");
@@ -603,7 +611,7 @@ mod tests {
         let lines: Vec<&str> = content.lines().map(|line| line.trim()).collect();
         let mut tree = CommandNode::new();
 
-        let commands = read_command_file(&lines);
+        let commands = read_command_file(&lines).unwrap();
 
         for command in &commands {
             tree.insert(command, 0);
