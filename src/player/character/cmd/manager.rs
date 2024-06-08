@@ -11,7 +11,7 @@ struct Command {
     name: String,
 }
 
-/// Representa un elemento de comando, que es la unidad más pequeña de un comando, y contiene las teclas presionadas y la información de temporización.
+/// Representa un elemento de comando, que es la unidad más pequeña de un comando, y contiene las teclas presionadas y el tiempo mantenido.
 #[derive(Debug, Clone)]
 struct CommandElement {
     elements: HashSet<CK>,
@@ -23,11 +23,17 @@ struct CommandElement {
 /// Contiene información sobre los elementos de comando, nombre del comando, sensibilidad, ventana de entrada y sub-nodos.
 #[derive(Debug, Clone)]
 pub struct CommandNode {
+    /// Nivel dentro del árbol
     level: usize,
+    /// Elemento para seguir la secuencia de comandos
     cmd_elements: Option<Vec<CK>>,
+    /// Nombre de la hoja
     name: Option<String>,
+    /// Sensibilidad con la que se debe ejecutar el comando
     sensitive: bool,
-    input_window: HashSet<u16>,
+    /// Ventana o franja para introducir un comando entre este y el anterior nodo
+    input_window: Vec<u16>,
+    /// Nodos subsiguientes a este
     sub_nodes: Vec<CommandNode>,
 }
 
@@ -92,12 +98,12 @@ impl CommandNode {
             cmd_elements: None,
             name: None,
             sensitive: false,
-            input_window: HashSet::new(),
+            input_window: Vec::new(),
             sub_nodes: Vec::new(),
         }
     }
 
-   /// Inserta un comando en el árbol de comandos a partir de él mismo.
+    /// Inserta un comando en el árbol de comandos a partir de él mismo.
     /// Recorre recursivamente el árbol e inserta los elementos de comando en las posiciones apropiadas.
     ///
     /// # Argumentos
@@ -109,14 +115,14 @@ impl CommandNode {
             if let Some(node) = self.sub_nodes.iter_mut().find(|node| {
                 node.cmd_elements == Some(cmd_element.elements.clone().into_iter().collect())
             }) {
-                node.input_window.insert(cmd_element.time);
+                node.input_window.push(cmd_element.time);
                 node.sensitive = cmd_element.sensitive;
                 node.level = pos;
                 node.insert(command, pos + 1);
             } else {
                 let mut new_command = CommandNode::new();
                 new_command.cmd_elements = Some(cmd_element.elements.clone().into_iter().collect());
-                new_command.input_window.insert(cmd_element.time);
+                new_command.input_window.push(cmd_element.time);
                 new_command.sensitive = cmd_element.sensitive;
                 new_command.level = pos;
                 if command.cmd_elements.len() - 1 <= pos {
@@ -503,4 +509,118 @@ pub fn create_command_tree(cmd: &str) -> Result<CommandNode, CmdError> {
     }
     tree.sort();
     return Ok(tree);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DIRANDACT: [(&str, CK); 15] = [
+        ("LP", CK::LP),
+        ("MP", CK::MP),
+        ("HP", CK::HP),
+        ("LK", CK::LK),
+        ("MK", CK::MK),
+        ("HK", CK::HK),
+        ("U", CK::U),
+        ("F", CK::F),
+        ("D", CK::D),
+        ("B", CK::B),
+        ("UF", CK::UF),
+        ("UB", CK::UB),
+        ("DF", CK::DF),
+        ("DB", CK::DB),
+        ("Start", CK::Start),
+    ];
+
+    /// Prueba de la creación de un cmd_element
+    #[test]
+    fn test_command_element_creation() {
+        let inputs: HashSet<String> = ["LP".to_string(), "MP".to_string()]
+            .iter()
+            .cloned()
+            .collect();
+
+        let cmd_element = CommandElement::new(inputs, 10, true, &DIRANDACT);
+
+        assert!(cmd_element.elements.contains(&CK::LP));
+        assert!(cmd_element.elements.contains(&CK::MP));
+        assert!(cmd_element.sensitive);
+        assert_eq!(cmd_element.time, 10);
+    }
+
+    /// Prueba para la isercción de un commando
+    #[test]
+    fn test_insert_command_node() {
+        let mut root = CommandNode::new();
+        let mut command = Command::new();
+        command.name = "test_command".to_string();
+        command.cmd_elements.push(CommandElement::new(
+            ["LP".to_string()].iter().cloned().collect(),
+            15,
+            true,
+            &DIRANDACT,
+        ));
+
+        root.insert(&command, 0);
+
+        assert_eq!(root.sub_nodes.len(), 1);
+        assert_eq!(root.sub_nodes[0].name, Some("test_command".to_string()));
+    }
+
+    // Prueba de lectura de archivo de comandos
+    #[test]
+    fn test_read_command_file() {
+        let lines = vec![
+            "[Command]",
+            "name = \"Prueba\"",
+            "command = F, MP+LP",
+            "time = 15",
+        ];
+        let commands = read_command_file(&lines);
+
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].name, "Prueba");
+        assert_eq!(commands[0].cmd_elements.len(), 2);
+        assert!(commands[0].cmd_elements[0].elements.contains(&CK::F));
+        assert_eq!(commands[0].cmd_elements[0].sensitive, false);
+        assert_eq!(commands[0].cmd_elements[0].time, 0);
+        assert!(commands[0].cmd_elements[1].elements.contains(&CK::LP));
+        assert!(commands[0].cmd_elements[1].elements.contains(&CK::MP));
+        assert_eq!(commands[0].cmd_elements[1].time, 15);
+        assert_eq!(commands[0].cmd_elements[1].sensitive, false);
+    }
+
+    // Prueba de creación de árbol
+    #[test]
+    fn test_create_command_tree() {
+        let content = "
+        [Command]
+        name = \"Prueba\"
+        command = F, MP+LP
+        time = 15
+    ";
+        let lines: Vec<&str> = content.lines().map(|line| line.trim()).collect();
+        let mut tree = CommandNode::new();
+
+        let commands = read_command_file(&lines);
+
+        for command in &commands {
+            tree.insert(command, 0);
+        }
+        tree.sort();
+
+        assert_eq!(tree.sub_nodes.len(), 1);
+        assert_eq!(tree.sub_nodes[0].cmd_elements, Some(vec![CK::F]));
+        assert_eq!(tree.sub_nodes[0].input_window, [0]);
+        assert_eq!(tree.sub_nodes[0].name,None);
+        assert_eq!(tree.sub_nodes[0].sensitive,false);
+        assert!(
+            tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::MP, CK::LP]) ||
+            tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::LP, CK::MP])
+        );
+        assert_eq!(tree.sub_nodes[0].sub_nodes[0].input_window, [15]);
+        assert_eq!(tree.sub_nodes[0].sub_nodes[0].name, Some("Prueba".to_string()));
+        assert_eq!(tree.sub_nodes[0].sub_nodes[0].sensitive, false);
+    }
 }

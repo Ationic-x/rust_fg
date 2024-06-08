@@ -18,7 +18,9 @@ use crate::error::sff_error::SffError;
 /// Estructura que representa un identificador de sprite.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SpriteId {
+    /// Grupo del sprite
     pub group: u16,
+    /// Número del sprite respecto al grupo
     pub image: u16,
 }
 
@@ -33,11 +35,17 @@ struct SffHeader {
     ver1: u8,
     ver2: u8,
     ver3: u8,
+    /// Desplazamiento de bytes entre la cabecera del SFF y el primer sprite
     first_sprite_header_offset: u32,
+    /// Desplazamiento de bytes entre la cabecera delf y la primera paleta
     first_palette_header_offset: u32,
+    /// Cantidad de sprites
     number_of_sprites: u32,
+    /// Catidad de paletas
     number_of_palettes: u32,
+    /// Desplazamientos a la izqueirda
     lofs: u32,
+    /// Desplazamiento hacía arriba
     tofs: u32,
 }
 
@@ -47,28 +55,41 @@ struct SffHeader {
 /// La estructura `Sff` contiene la cabecera del archivo SFF, una lista de sprites, una lista de paletas,
 /// el nombre del archivo y el contexto gráfico utilizado para renderizar los sprites.
 pub struct Sff {
+    /// Cabecera del SFF
     header: SffHeader,
+    /// Sprites del SFF acceisbles por su grupo e id
     pub sprites: HashMap<[i16; 2], Sprite>,
-    pub pal_list: PaletteList,
+    /// Lista de paletas
+    pal_list: PaletteList,
+    /// Nombre del archivo
     filename: String,
+    /// Nombre del personaje
     name: String,
+    /// Contexto de la ventana para dibujar el sprite
     context: G2dTextureContext,
 }
 
 /// Estructura que representa un color con componentes RGBA.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Color {
+    /// Color rojo 0-255
     red: u8,
+    /// Color verde 0-255
     green: u8,
+    /// Color azul 0-255
     blue: u8,
+    /// Cantidad de opacidad 0-255
     alpha: u8,
 }
 
 /// Estructura que representa una lista de paletas.
 #[derive(Debug, Clone)]
 pub struct PaletteList {
+    /// Listado de paletas
     palettes: Vec<Vec<Color>>,
+    /// Identificadores de las paletas
     palette_map: Vec<i32>,
+    /// Tabla con una referencia del identificador en base a la cantidad de paletas existentes
     pal_table: HashMap<[i16; 2], i32>,
 }
 
@@ -79,16 +100,27 @@ pub struct PaletteList {
 /// relacionados con su grupo, número y dimensiones.
 #[derive(Debug, Clone)]
 pub struct Sprite {
+    /// Paleta original en uso por el sprite
     pub pal: Vec<Color>,
+    /// Textura del Sprite
     pub tex: Option<Rc<piston_window::Texture<Resources>>>,
+    /// Definición en cruda de la imagen
     pub raw: Vec<u8>,
+    /// Grupo al que pertenece el sprite
     pub group: i16,
+    /// Número al que pertenece el sprite
     pub number: i16,
+    /// Tamaño del sprite
     pub size: [u16; 2],
+    /// Desplazamiento en la X e Y del sprite
     pub offset: [i16; 2],
+    /// ID de la paleta en uso
     pub pal_idx: i32,
+    /// Compresión del Sprite
     pub rle: i32,
+    /// Profundidad de colores del Sprite
     pub col_depth: u8,
+    /// Paleta temporal en uso por el Sprite
     pub pal_temp: Vec<Color>,
 }
 

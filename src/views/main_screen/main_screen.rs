@@ -18,10 +18,15 @@ use super::gui;
 
 /// Representa la pantalla principal del juego.
 pub struct MainScreen {
+    /// Elementos precargados
     preloads: Arc<Mutex<Preloads>>,
+    /// Opción elegida dentro del menú
     selected_index: usize,
+    /// Emisor de eventos
     event_sender: Sender<Event>,
+    /// Estado de la ventana de información (visible o no)
     info_popup: bool,
+    /// Indice dentro de la ventana de información
     info_index: usize,
 }
 

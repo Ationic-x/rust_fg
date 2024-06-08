@@ -11,26 +11,43 @@ const PAUSE_DURATION: i32 = 3;
 
 /// Estructura que representa el jugador en el juego.
 pub struct Player {
+    /// Indica si es el primer o segundo jugador
     first_player: bool,
-    pub input_manager: InputManager,
+    /// Gestiona los inputs del jugador
+    input_manager: InputManager,
+    /// Mapeo de teclas personalizado del jugador
     key_map: KeyMap,
+    /// Personaje elegido por el jugador
     character: Option<Character>,
+    /// Estado donde se puede modificar ciertos inputs (para casos de teclas dobles)
     replace_action: bool,
+    /// Franja de tiempo donde permite modificar ciertos input (para casos de teclas dobles)
     replace_timer: i32,
 }
 
 /// Estructura que represental el mapeo de teclas para el jugador.
 pub struct KeyMap {
+    /// Puño débil
     lp: Key,
+    /// Puño medio
     mp: Key,
+    /// Puño fuerte
     hp: Key,
+    /// Patada baja
     lk: Key,
+    /// Patada media
     mk: Key,
+    /// Patada fuerte
     hk: Key,
+    /// Adelante
     f: Key,
+    /// Arriba
     u: Key,
+    /// Atrás
     b: Key,
+    /// Abajo
     d: Key,
+    /// Inicio/Taunt
     start: Key,
 }
 

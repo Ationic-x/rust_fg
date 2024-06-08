@@ -364,7 +364,7 @@ impl CommandInput {
     ///
     /// # Retorna
     /// Una nueva instancia de `CommandInput` inicalizada por defecto
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             keys: Vec::new(),
             input_window: 0,

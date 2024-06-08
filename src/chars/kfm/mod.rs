@@ -621,40 +621,74 @@ impl Character for CharData {
 /// Estructura que representa los datos de un personaje.
 pub struct CharData {
     //name: String,
+    /// Vida del personaje
     life: i32,
+    /// Cantidad de energía/poder del personaje
     power: u32,
+    /// Estado en el que se encuentra (de pie, tirado, en el aire...)
     state: State,
+    /// Estado con el que se realiza el ataque (de pie, en el aire, agachado...)
     attack: State,
+    /// Control sobre el personaje
     ctrl: bool,
+    /// Estado númerico o acción que anda realizado
     state_no: i32,
+    /// Tiempo en el aire
     air_time: i32,
+    /// Capacidad de doble salto
     double_jump: bool,
+    /// Estado de correr
     run: bool,
+    /// Animación que anda reproduciendose
     anim: i32,
     //fx: u32,
+    /// Nombre de la acción a realizar
     action: String,
+    /// Tiempo total en un anim elemen
     time: i32,
+    /// Tiempo total de la animación
     anim_time: i32,
+    /// Elemento de la animación
     anim_elem: i32,
+    /// Estado de nueva animación
     new_anim: bool,
+    /// Desplazamiento en la X del sprite relativa a la del escenario
     offset_x: f64,
+    /// Desplazamiento en la Y del sprite relativa a la del escenario
     offset_y: f64,
+    /// Ancho total del sprite
     width: u16,
+    /// Posición en la X en el escenario
     x: f64,
+    /// Posición en la Y  en el escenario
     y: f64,
+    /// Velocidad en la X
     vel_x: f64,
+    /// Velocidad en la Y
     vel_y: f64,
+    /// Estado de defensa
     def: bool,
+    /// Dirección en la que se está movimiendo
     direction: u8,
+    /// Número de saltos realizados
     jumps: i32,
+    /// Estado anterior de giro horizontal
     previous_flip: bool,
+    /// Estado actual de giro horizontal
     current_flip: bool,
+    /// Estado de giro horizontal que afecta solo al sprite
     flip_x: bool,
+    /// Distancia respecto al jugador 2
     distance: f64,
+    /// Estado número con el que ha sido golpeado
     hit: i32,
+    /// Estado de caída
     fall: bool,
+    /// Estado de victoria
     win: bool,
+    /// Estado de derrota
     lose: bool,
+    /// Estado de choque con una pared
     wall: bool,
 }
 

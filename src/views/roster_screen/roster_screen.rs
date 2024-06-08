@@ -17,16 +17,27 @@ const TICK_RESET: usize = 20;
 
 /// Representa la pantalla de selección de personajes.
 pub struct RosterScreen {
+    /// Indice del personaje a elegir por el jugador 1
     p1_selected_index: usize,
+    /// Estado de si ha elegido el jugador 1
     p1_selected: bool,
+    /// Color elegido por el juagdro 1
     p1_color: usize,
+    /// Indice del color a elegir por el jugador 1
     p1_index_color: usize,
+    /// Indice del personaje a elegir por el jugador 2
     p2_selected_index: usize,
+    /// Estado de si ha elegido el jugador 2
     p2_selected: bool,
+    /// Indice dle color a elegir por el jugador 2
     p2_index_color: usize,
+    /// Color elegido por el jugador 2
     p2_color: usize,
+    /// Ticks que han transcurrido en la escena
     ticks: usize,
+    /// Emisor de eventos
     event_sender: Sender<Event>,
+    /// Elementos precargados
     preloads: Arc<Mutex<Preloads>>,
 }
 

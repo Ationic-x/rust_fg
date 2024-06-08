@@ -11,8 +11,11 @@ use crate::{
 
 /// Struct que contiene los recursos precargados para el juego, como fondos, fuentes y personajes.
 pub struct Preloads {
+    /// Lista de fondo precargados
     backgrounds: Vec<Texture<Resources>>,
+    /// Lista de fuentes precargadas
     fonts: Vec<Glyphs>,
+    /// Lista de archivos SFF de personajes precargados
     roster: Vec<Sff>,
 }
 

@@ -17,8 +17,11 @@ use super::{
 
 /// Estructura que representa un personaje en el juego.
 pub struct Character {
+    /// Personaje elegido por el jugador
     char: Box<dyn chars::Character>,
+    /// Tabla de animaciones del personaje
     at: AnimationTable,
+    /// Árbol de comandos del personaje
     cmd: CommandNode,
 }
 

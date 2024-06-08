@@ -11,8 +11,11 @@ use super::gui;
 
 /// Representa la pantalla de carga del juego.
 pub struct LoadingScreen {
+    /// Elementos precargados
     preloads: Arc<Mutex<Preloads>>,
+    /// Emisor de eventos
     event_sender: Sender<Event>,
+    /// Ticks dentro de la ventana de carga
     ticks: usize,
 }
 

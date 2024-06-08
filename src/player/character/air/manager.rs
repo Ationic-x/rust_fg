@@ -17,15 +17,23 @@ use sprite::Sprite;
 ///
 /// Esta estructura se utiliza para definir áreas de colisión en un juego, que pueden ser
 /// utilizadas para detectar colisiones entre objetos del juego.
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Clsn {
+    /// Es una hitbos o una Hurtbox
     hitbox: bool,
+    /// Desplazamiento en la X respecto su original
     ofs_x: f64,
+    /// Desplazamiento a la derecha respecto su original
     ofs_right: f64,
+    /// Desplazamiento en la Y respecto su original
     ofs_y: f64,
+    /// Posición en la X
     x: f64,
+    /// Posición en la Y
     y: f64,
+    /// Ancho de la colisión
     width: f64,
+    /// Alto de la colisión
     height: f64,
 }
 
@@ -34,48 +42,81 @@ pub struct Clsn {
 /// Esta estructura contiene las animaciones disponibles para un personaje en un juego.
 /// Permite cargar y manipular animaciones, así como también trabajar con las colisiones asociadas a cada una.
 pub struct AnimationTable {
+    /// Mapa de animación identificaod por su ID
     animations: HashMap<i32, Animation>,
+    /// Referencia mutable del manejador del archivo SFF
     sff: Option<Arc<Mutex<Sff>>>,
+    /// Referencia del sprite del jugador
     spr: Option<Arc<Mutex<Sprite<Texture<Resources>>>>>,
+    /// Vector con las colisiones activas del jugador
     clsns: Vec<Clsn>,
 }
 
 /// Struct que representa un fotograma de una animación, incluyendo las colisiones.
 #[derive(Clone, Debug)]
 pub struct AnimFrame {
+    /// Tiempo que dura el frame
     time: i32,
+    /// Grupo al que pertenece el frame
     group: i16,
+    /// Número dentro del grupo al que pertence el frame
     number: i16,
+    /// Posción en la X
     x: i16,
+    /// Posición en la Y
     y: i16,
+    /// Color alpha del sprite original
     src_alpha: u8,
+    /// Color alpha del sprite al que transiciona
     dst_alpha: u8,
+    /// Rotación horizontal del sprite
     h: i8,
+    /// Rotación vertical del sprite
     v: i8,
+    /// Colisiones del frame
     ex: Vec<Vec<f64>>,
+    /// Hurtboxes por defecto en el frame
     def1: bool,
+    /// Hitboxes por defecto en el frame
     def2: bool,
 }
 
 /// Struct que representa una animación.
 #[derive(Clone)]
 pub struct Animation {
+    /// Referencia mutable del gestor del archivo SFF
     sff: Option<Arc<Mutex<Sff>>>,
+    /// Refenrecia mutable del sprite del jugador
     spr: Option<Arc<Mutex<Sprite<Texture<Resources>>>>>,
-    pub frames: Vec<AnimFrame>,
+    /// Vector de los frames del jugador
+    frames: Vec<AnimFrame>,
+    /// Indicador del frame donde inicia un bucle
     loopstart: i32,
+    /// Tranlación del sprite en el X
     interpolate_offset: Vec<i32>,
+    /// Cambio de la escala en el sprite
     interpolate_scale: Vec<i32>,
+    /// Cambio del angulo en el sprite
     interpolate_angle: Vec<i32>,
+    /// Cambio del dibujado en el sprite
     interpolate_blend: Vec<i32>,
+    /// Frame actualmente que se anda dibujando
     current: i32,
+    /// ID del frame dibujado
     drawidx: i32,
+    /// Tiempo que se lleva dibujando el frame
     time: i32,
+    /// Suma total que se llava en la animación
     sumtime: i32,
-    pub totaltime: i32,
+    /// Tiempo total que se debe llegar
+    totaltime: i32,
+    /// Tiempo en el bucle
     looptime: i32,
+    /// Tiempo para eventos o pausas
     nazotime: i32,
+    /// Máscara que cambia la paleta
     mask: i16,
+    /// Fin del bucle
     loopend: bool,
 }
 
@@ -767,12 +808,14 @@ fn atof(s: &str) -> f64 {
         }
         let mut i = 0;
         let mut p = 0;
+        let mut m = 0;
         for c in a.chars() {
             if c == '.' {
                 if p != 0 {
                     break;
                 }
-                p = i + 1;
+                p = i;
+                m = 1;
                 continue;
             }
             if !c.is_digit(10) {
@@ -782,11 +825,11 @@ fn atof(s: &str) -> f64 {
             i += 1;
         }
         let mut e = 0.0;
-        if i + 1 < a.len()
-            && (a.chars().nth(i).unwrap_or_default() == 'e'
-                || a.chars().nth(i).unwrap_or_default() == 'E')
+        if i + m + 1 < a.len()
+            && (a.chars().nth(i + m).unwrap_or_default() == 'e'
+                || a.chars().nth(i + m).unwrap_or_default() == 'E')
         {
-            let mut j = i + 1;
+            let mut j = i + m + 1;
             if a.chars().nth(j).unwrap_or_default() == '-'
                 || a.chars().nth(j).unwrap_or_default() == '+'
             {
@@ -797,7 +840,7 @@ fn atof(s: &str) -> f64 {
                 j += 1;
             }
             if e != 0.0 {
-                if a.chars().nth(i + 1).unwrap_or_default() == '-' {
+                if a.chars().nth(i + m + 1).unwrap_or_default() == '-' {
                     e *= -1.0;
                 }
                 if p == 0 {
@@ -1097,5 +1140,279 @@ pub fn parse_air(air: &str) -> Result<AnimationTable, AirError> {
     match read_animation_table(&content.as_str()) {
         Ok(at) => return Ok(at),
         Err(err) => return Err(err),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Función para comparar vectores f64.
+    ///
+    /// # Argumentos
+    ///
+    /// `a` - Un vector f64.
+    /// `b` - Otro vector f64 para comparar con a.
+    /// `epsilon` - Margen de error a la hora de comparar.
+    ///
+    /// # Retorna
+    ///
+    /// True si ambos vectores son iguales, false si son distintos.
+    fn approx_eq_vec(a: &Vec<f64>, b: &Vec<f64>, epsilon: f64) -> bool {
+        if a.len() != b.len() {
+            return false;
+        }
+        a.iter().zip(b.iter()).all(|(a, b)| (a - b).abs() < epsilon)
+    }
+
+    #[test]
+    /// Prueba si un archivo air bien formado lo crea y si uno que ni existe falla
+    fn test_parse_air() {
+        assert!(parse_air("src/chars/kfm/kfm.air").is_ok());
+        assert!(parse_air("INVALIDAIR.A.A.A").is_err());
+    }
+
+    /// Prueba unitaria de la lectura de una acción normal.
+    #[test]
+    fn test_read_action_valid() {
+        let lines = vec![
+            "[Begin Action 5]",
+            "Clsn1: 1",
+            "Clsn1[0] =  16,-80, 61,-71",
+            "Clsn2Default: 2",
+            "Clsn2[0] = -13,  0, 16,-79",
+            "Clsn2[1] =   5,-79, -7,-93",
+            "10,20, 13,8, 7",
+            "Loopstart",
+            "1,10, 0,8, 5",
+        ];
+        let mut index = 0;
+        let result = read_action(&lines, &mut index);
+
+        assert!(result.is_ok());
+        let animation = result.unwrap();
+
+        assert!(animation.is_some());
+        let (number, animation) = animation.unwrap();
+        assert_eq!(number, 5);
+        assert_eq!(animation.frames.len(), 2);
+        assert_eq!(animation.frames[0].group, 10);
+        assert_eq!(animation.frames[0].number, 20);
+        assert_eq!(animation.frames[0].x, 13);
+        assert_eq!(animation.frames[0].y, 8);
+        assert_eq!(animation.frames[0].time, 7);
+        assert!(
+            approx_eq_vec(
+                &animation.frames[0].ex[0],
+                &vec![16.0, -80.0, 61.0, -71.0],
+                1e-6
+            ),
+            "Clsn1 are not equal"
+        );
+        assert!(
+            approx_eq_vec(
+                &animation.frames[0].ex[1],
+                &vec![-13.0, -79.0, 16.0, 0.0, -7.0, -93.0, 5.0, -79.0],
+                1e-6
+            ),
+            "Clsn2 are not equal"
+        );
+
+        assert_eq!(animation.loopstart, 1);
+        assert_eq!(animation.frames[1].group, 1);
+        assert_eq!(animation.frames[1].number, 10);
+        assert_eq!(animation.frames[1].x, 0);
+        assert_eq!(animation.frames[1].y, 8);
+        assert_eq!(animation.frames[1].time, 5);
+        assert!(
+            approx_eq_vec(&animation.frames[1].ex[0], &vec![], 1e-6),
+            "Clsn1 are not equal"
+        );
+        assert!(
+            approx_eq_vec(
+                &animation.frames[1].ex[1],
+                &vec![-13.0, -79.0, 16.0, 0.0, -7.0, -93.0, 5.0, -79.0],
+                1e-6
+            ),
+            "Clsn2 are not equal"
+        );
+    }
+
+    /// Prueba unitaria cuando se envía un formato inválido.
+    #[test]
+    fn test_read_action_invalid_format() {
+        let lines = vec!["[Begin Action]", "10,20, 13,8, 7", "1,10, 0,8, 5"];
+        let mut index = 0;
+        let result = read_action(&lines, &mut index);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    /// Prueba unitaria cuando se envía una acción sin animación.
+    #[test]
+    fn test_read_action_no_animation() {
+        let lines = vec![
+            "[Begin Action 5]",
+            "Clsn1: 1",
+            "Clsn1[0] =  16,-80, 61,-71",
+            "Clsn2Default: 2",
+            "Clsn2[0] = -13,  0, 16,-79",
+            "Clsn2[1] =   5,-79, -7,-93",
+        ];
+        let mut index = 0;
+        let result = read_action(&lines, &mut index);
+        assert!(result.is_ok());
+
+        let animation = result.unwrap();
+        assert!(animation.is_some());
+        let (number, animation) = animation.unwrap();
+
+        assert_eq!(number, 5);
+        assert_eq!(animation.frames.len(), 0);
+    }
+
+    /// Prueba unitaria cuando se envía una acción con formato incorrecto en las líneas.
+    #[test]
+    fn test_read_action_invalid_line_format() {
+        let lines = vec!["[Begin Action 5]", "Invalid Line", "10,20, 13,8, 7"];
+        let mut index = 0;
+        let result = read_action(&lines, &mut index);
+
+        assert!(result.is_ok());
+        let animation = result.unwrap();
+
+        assert!(animation.is_some());
+        let (number, animation) = animation.unwrap();
+        assert_eq!(number, 5);
+        assert_eq!(animation.frames.len(), 1);
+        assert_eq!(animation.frames[0].group, 10);
+        assert_eq!(animation.frames[0].number, 20);
+        assert_eq!(animation.frames[0].x, 13);
+        assert_eq!(animation.frames[0].y, 8);
+        assert_eq!(animation.frames[0].time, 7);
+    }
+
+    /// Prueba unitaria cuando se envía una acción con un número negativo.
+    #[test]
+    fn test_read_action_negative_number() {
+        let lines = vec![
+            "[Begin Action -1]",
+            "Clsn1: 1",
+            "Clsn1[0] =  16,-80, 61,-71",
+            "10,20, 13,8, 7",
+        ];
+        let mut index = 0;
+        let result = read_action(&lines, &mut index);
+
+        assert!(result.is_ok());
+        let animation = result.unwrap();
+
+        assert!(animation.is_some());
+        let (number, animation) = animation.unwrap();
+        assert_eq!(number, -1);
+        assert_eq!(animation.frames.len(), 1);
+        assert_eq!(animation.frames[0].group, 10);
+        assert_eq!(animation.frames[0].number, 20);
+        assert_eq!(animation.frames[0].x, 13);
+        assert_eq!(animation.frames[0].y, 8);
+        assert_eq!(animation.frames[0].time, 7);
+    }
+
+    /// Prueba unitaria para la función atoi.
+    #[test]
+    fn test_atoi() {
+        // Casos de prueba válidos
+        assert_eq!(atoi(&"123".to_string()), Ok(123));
+        assert_eq!(atoi(&"-123".to_string()), Ok(-123));
+        assert_eq!(atoi(&"+123".to_string()), Ok(123));
+        assert_eq!(atoi(&"   123   ".to_string()), Ok(123));
+        assert_eq!(atoi(&"0000123".to_string()), Ok(123));
+
+        // Casos de prueba de entrada no válida
+        assert_eq!(atoi(&"abc".to_string()), Ok(0));
+        assert_eq!(atoi(&"123abc".to_string()), Ok(123));
+        assert_eq!(atoi(&"-123abc".to_string()), Ok(-123));
+        assert_eq!(atoi(&"".to_string()), Ok(0));
+        assert_eq!(atoi(&"   ".to_string()), Ok(0));
+
+        // Casos de prueba fuera del rango de int32
+        assert_eq!(atoi(&"2147483648".to_string()), Ok(0));
+        assert_eq!(atoi(&"-2147483649".to_string()), Err(Error));
+    }
+
+    /// Prueba unitaria para la función atof.
+    #[test]
+    fn test_atof() {
+        // Casos de prueba válidos
+        assert_eq!(atof("123.45"), 123.45);
+        assert_eq!(atof("-123.45"), -123.45);
+        assert_eq!(atof("+123.45"), 123.45);
+        assert_eq!(atof("   123.45   "), 123.45);
+        assert_eq!(atof("0.123"), 0.123);
+        assert_eq!(atof("123e2"), 12300.0);
+        assert_eq!(atof("123e-2"), 1.23);
+        assert_eq!(atof("-123e2"), -12300.0);
+        assert_eq!(atof("1.23e2"), 123.0);
+        assert_eq!(atof("1.23e-2"), 0.0123);
+
+        // Casos de prueba de entrada no válida
+        assert_eq!(atof("abc"), 0.0);
+        assert_eq!(atof("123.45abc"), 123.45);
+        assert_eq!(atof("123.45.67"), 123.45);
+        assert_eq!(atof(""), 0.0);
+        assert_eq!(atof("   "), 0.0);
+    }
+
+    /// Prueba unitaria para la actualización de colisiones
+    #[test]
+    fn test_update_clsns() {
+
+        let air = parse_air("src/chars/kfm/kfm.air");
+        assert!(air.is_ok());
+        let mut animation_table = air.unwrap();
+        let clsns = &mut animation_table.clsns;
+        if let Some(animation) = animation_table.animations.get(&0) {
+            
+            // Llamar al método update_clsns para actualizar el vector de colisiones
+            animation.update_clsns(clsns);
+            
+            // [Begin Action 0]
+            // Clsn2Default: 2
+            //  Clsn2[0] = -13,  0, 16,-79
+            //  Clsn2[1] =   5,-79, -7,-93
+            // 0,0, 0,0, 10
+            // 0,1, 0,0, 7
+            // 0,2, 0,0, 7
+            // 0,3, 0,0, 7
+            // 0,4, 0,0, 7
+            // 0,5, 0,0, 45
+            // 0,4, 0,0, 7
+            // 0,3, 0,0, 7
+            // 0,2, 0,0, 7
+            // 0,1, 0,0, 7
+            // 0,0, 0,0, 40
+
+            let expected_clsn0 = Clsn::new(13.0, -79.0, 16.0, 0.0, true);
+            let expected_clsn1 = Clsn::new(-7.0, -93.0, 5.0, -79.0, true);
+            println!("{:?}", expected_clsn0);
+            assert_eq!(clsns.len(), 2);
+            assert_eq!(clsns[0].height, expected_clsn0.height);
+            assert_eq!(clsns[0].width, expected_clsn0.width);
+            assert_eq!(clsns[0].hitbox, expected_clsn0.hitbox);
+            assert_eq!(clsns[0].ofs_right, expected_clsn0.ofs_right);
+            assert_eq!(clsns[0].ofs_x, expected_clsn0.ofs_x);
+            assert_eq!(clsns[0].ofs_y, expected_clsn0.ofs_y);
+            assert_eq!(clsns[0].x, expected_clsn0.x);
+            assert_eq!(clsns[0].y, expected_clsn0.y);
+            
+            assert_eq!(clsns[1].height, expected_clsn1.height);
+            assert_eq!(clsns[1].width, expected_clsn1.width);
+            assert_eq!(clsns[1].hitbox, expected_clsn1.hitbox);
+            assert_eq!(clsns[1].ofs_right, expected_clsn1.ofs_right);
+            assert_eq!(clsns[1].ofs_x, expected_clsn1.ofs_x);
+            assert_eq!(clsns[1].ofs_y, expected_clsn1.ofs_y);
+            assert_eq!(clsns[1].x, expected_clsn1.x);
+            assert_eq!(clsns[1].y, expected_clsn1.y);
+        }
     }
 }

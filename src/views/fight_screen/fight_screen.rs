@@ -30,18 +30,31 @@ enum State {
 
 /// Representa la pantalla de combate del juego.
 pub struct FightScreen {
+    /// Jugadores
     players: [Player; 2],
+    /// Tiempo transcurrido en la pelea
     ticks: u16,
+    /// Estado de debug
     debug: bool,
+    /// Última instancia de tiempo (tramiento en segundos)
     last_print_time: Instant,
+    /// Última instande de actualización (tramiento en segundos)
     last_update: Instant,
+    /// Tiempo total transcurrido (tramiento en segundos)
     total_time: Duration,
+    /// Frames que han habido entre segundo y segundo
     total_frames: i32,
+    /// Tiempo que lleva el temporizador
     timer: u32,
+    /// Estado con el fin de ronda, 1 gana jugador 1, 2 gana jugador 2, 3 empate 
     end_round: u8,
+    /// Emisor de eventos
     event_sender: Sender<Event>,
+    /// Promedio de Frames entre segundos
     average_fps: f64,
+    /// Estado en el que se encuentra el combate
     state: State,
+    /// Elementos precargados
     preloads: Arc<Mutex<Preloads>>,
 }
 

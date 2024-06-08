@@ -37,12 +37,19 @@ pub enum Event {
 
 /// Struct que administra las pantallas en el juego y conserva datos entre ellas.
 pub struct ScreenManager {
+    /// Ventana actual en uso
     current_screen: Option<Box<dyn Screen>>,
+    /// Emisor de eventos
     event_sender: Sender<Event>,
+    /// Receptor de eventos
     event_receiver: Receiver<Event>,
+    /// Personaje actualmente en uso por jugador 1 y 2
     current_characters: [String; 2],
+    /// Paletas actualmenteen uso por jugador 1 y 2
     current_palettes: [usize; 2],
+    /// Ventana a la que cambiar
     switch_screen: ScreenType,
+    /// Archivos precargados
     preloads: Arc<Mutex<Preloads>>,
 }
 
