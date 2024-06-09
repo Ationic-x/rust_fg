@@ -10,9 +10,6 @@ pub mod views;
 mod preloader;
 mod error;
 
-extern crate image;
-extern crate piston_window;
-
 /// Enumaración de teclas de comandos que se pueden pulsar
 #[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 pub enum CK {

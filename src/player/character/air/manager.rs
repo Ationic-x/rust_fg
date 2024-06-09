@@ -1392,7 +1392,7 @@ mod tests {
             // 0,1, 0,0, 7
             // 0,0, 0,0, 40
 
-            let expected_clsn0 = Clsn::new(13.0, -79.0, 16.0, 0.0, true);
+            let expected_clsn0 = Clsn::new(-13.0, -79.0, 16.0, 0.0, true);
             let expected_clsn1 = Clsn::new(-7.0, -93.0, 5.0, -79.0, true);
             println!("{:?}", expected_clsn0);
             assert_eq!(clsns.len(), 2);
