@@ -494,7 +494,7 @@ impl AnimationTable {
             Ok(sff) => self.sff = Some(Arc::new(Mutex::new(sff))),
             Err(err) => {
                 show_error_popup(&err);
-                std::process::exit(0);
+                std::process::exit(1);
             }
         }
         self.set_animation_sff();

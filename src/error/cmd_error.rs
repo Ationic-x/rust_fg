@@ -7,6 +7,7 @@ use std::error::Error;
 pub enum CmdError {
     /// Error que indica que no se pudo encontrar el archivo de comando especificado.
     NotFound(String),
+    /// Error que indica que el archivo está malformado y en que línea
     Malformed(usize),
 }
 

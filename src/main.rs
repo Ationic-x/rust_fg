@@ -5,13 +5,12 @@ extern crate piston_window;
 
 use piston_window::*;
 use winit::window::WindowButtons;
+use rust_fg::views::screen_manager::{ScreenManager, ScreenType};
 
 /// Máximo de frames por segundo (FPS) para la ventana del juego.
 const FPS: u64 = 60;
 
-
-use rust_fg::views::screen_manager::{ScreenManager, ScreenType};
-
+/// Función para crear un ventana por defecto tipo Piston
 fn new_window(title: &str, size: [f64;2]) -> PistonWindow{
     WindowSettings::new(title, size)
         .resizable(false)
@@ -31,7 +30,6 @@ fn main() {
 
     let mut screen_manager = ScreenManager::new(ScreenType::Main, &mut window);
 
-    //let at_mut = at.get(0).unwrap();
     while let Some(e) = window.next() {
         if let Some(_) = e.update_args() {
             screen_manager.update(&mut window);

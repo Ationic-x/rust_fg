@@ -313,8 +313,8 @@ fn read_command_file(lines: &Vec<&str>) -> Result<Vec<Command>, CmdError> {
                     &mut commands,
                     &time,
                 ) {
-                 Ok(_) => {},
-                 Err(_) => return Err(CmdError::Malformed(i)),
+                    Ok(_) => {}
+                    Err(_) => return Err(CmdError::Malformed(i)),
                 };
             }
             _ => {}
@@ -335,7 +335,12 @@ fn read_command_file(lines: &Vec<&str>) -> Result<Vec<Command>, CmdError> {
 /// * `pos` - La posición en el vector de comandos donde deben completarse los detalles del comando.
 /// * `commands` - Una referencia mutable a un vector de instancias de `Command`.
 /// * `time` - Una referencia a un vector que contiene la información de temporización para el comando.
-fn parse_command(elements: Vec<&str>, pos: usize, commands: &mut Vec<Command>, time: &Vec<u16>) -> Result<(), ()> {
+fn parse_command(
+    elements: Vec<&str>,
+    pos: usize,
+    commands: &mut Vec<Command>,
+    time: &Vec<u16>,
+) -> Result<(), ()> {
     let mut hold_element = String::new();
     let mut hold = false;
 
@@ -599,6 +604,20 @@ mod tests {
         assert_eq!(commands[0].cmd_elements[1].sensitive, false);
     }
 
+    // Prueba de lectura de archivo mal formador
+    #[test]
+    fn test_read_malformed_command_file() {
+        let lines = vec![
+            "[Command]",
+            "name = \"Prueba\"",
+            "command = F, K",
+            "time = 15",
+        ];
+        let result = read_command_file(&lines);
+
+        assert!(result.is_err());
+    }
+
     // Prueba de creación de árbol
     #[test]
     fn test_create_command_tree() {
@@ -621,14 +640,17 @@ mod tests {
         assert_eq!(tree.sub_nodes.len(), 1);
         assert_eq!(tree.sub_nodes[0].cmd_elements, Some(vec![CK::F]));
         assert_eq!(tree.sub_nodes[0].input_window, [0]);
-        assert_eq!(tree.sub_nodes[0].name,None);
-        assert_eq!(tree.sub_nodes[0].sensitive,false);
+        assert_eq!(tree.sub_nodes[0].name, None);
+        assert_eq!(tree.sub_nodes[0].sensitive, false);
         assert!(
-            tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::MP, CK::LP]) ||
-            tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::LP, CK::MP])
+            tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::MP, CK::LP])
+                || tree.sub_nodes[0].sub_nodes[0].cmd_elements == Some(vec![CK::LP, CK::MP])
         );
         assert_eq!(tree.sub_nodes[0].sub_nodes[0].input_window, [15]);
-        assert_eq!(tree.sub_nodes[0].sub_nodes[0].name, Some("Prueba".to_string()));
+        assert_eq!(
+            tree.sub_nodes[0].sub_nodes[0].name,
+            Some("Prueba".to_string())
+        );
         assert_eq!(tree.sub_nodes[0].sub_nodes[0].sensitive, false);
     }
 }

@@ -636,3 +636,74 @@ impl InputManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Prueba de los input métidos por el jugador
+    #[test]
+    fn test_player_input_set_state() {
+        let mut input = PlayerInput::new();
+        assert_eq!(input.set_state("lp", true), false);
+        assert_eq!(input.lp, true);
+        assert_eq!(input.set_state("lp", false), true);
+        assert_eq!(input.lp, false);
+        assert_eq!(input.set_state("mp", true), false);
+        assert_eq!(input.mp, true);
+        assert_eq!(input.set_state("invalid_key", true), false);
+    }
+
+    /// Prueba de conversión de input a bits
+    #[test]
+    fn test_player_input_to_bits() {
+        let mut input = PlayerInput::new();
+        input.lp = true;
+        input.hp = true;
+        input.f = true;
+        input.u = true;
+        let bits = input.to_bits();
+        assert_eq!(bits, (Action::LP as u16) | (Action::HP as u16) | 5 | 2);
+    }
+
+
+    /// Prueba de actualización de teclas en el buffer
+    #[test]
+    fn test_input_manager_update_hold_key() {
+        let mut manager = InputManager::new();
+        let mut input_key = InputKey::new(CK::LP);
+        input_key.update();
+        let command_input = CommandInput {
+            keys: vec![input_key],
+            input_window: 0,
+            walked: false,
+            found: false,
+        };
+        manager.input_buffer.push(command_input);
+        manager.player_input.lp = true;
+        manager.update_hold_key();
+        assert_eq!(manager.input_buffer[0].keys[0].buff_time, 2);
+    }
+
+    /// Test de giro de buffer
+    #[test]
+    fn test_input_manager_flip() {
+        let mut manager = InputManager::new();
+        manager.player_input.f = true;
+        manager.player_input.b = false;
+        manager.flip();
+        assert_eq!(manager.player_input.f, false);
+        assert_eq!(manager.player_input.b, true);
+    }
+
+    /// Test de limpieza del input buffer
+    #[test]
+    fn test_input_manager_clear() {
+        let mut manager = InputManager::new();
+        manager.player_input.lp = true;
+        manager.input_buffer.push(CommandInput::new());
+        manager.clear();
+        assert_eq!(manager.player_input.lp, false);
+        assert!(manager.input_buffer.is_empty());
+    }
+}

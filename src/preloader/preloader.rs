@@ -98,7 +98,7 @@ impl Preloads {
                             Ok(sff) => roster.push(sff),
                             Err(err) => {
                                 show_error_popup(&err);
-                                std::process::exit(0);
+                                std::process::exit(1);
                             }
                         }
                     }
