@@ -3,8 +3,10 @@
 extern crate image;
 extern crate piston_window;
 
+use std::path::Path;
+
 use piston_window::*;
-use winit::window::WindowButtons;
+use winit::window::{Icon, WindowButtons};
 use rust_fg::views::screen_manager::{ScreenManager, ScreenType};
 
 /// Máximo de frames por segundo (FPS) para la ventana del juego.
@@ -19,12 +21,26 @@ fn new_window(title: &str, size: [f64;2]) -> PistonWindow{
         .unwrap()
 }
 
+/// Función para cargar y crar un Struct tipo icon
+fn load_icon(path: &Path) -> Icon {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open(path).unwrap().into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
+}
+
 /// Punto de entrada de la aplicación.
 fn main() {
     let mut window: PistonWindow = new_window("Rust_FG", [512.0;2]);
+    let icon_path = Path::new("assets/icon/icon.png");
+    let window_icon = load_icon(icon_path);
 
     let conf_window: &winit::window::Window = &window.window.window;
     conf_window.set_enabled_buttons(WindowButtons::CLOSE | WindowButtons::MINIMIZE);
+    conf_window.set_window_icon(Some(window_icon));
     window.events.set_max_fps(FPS);
     window.events.set_ups(FPS);
 
